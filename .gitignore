@@ -1,0 +1,81 @@
+# CUSTOS - Git Configuration
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environment
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# Build
+*.manifest
+*.spec
+
+# Distribution
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Uploads
+uploads/
+media/
+
+# Alembic
+alembic/versions/*.pyc
+
+# Misc
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
