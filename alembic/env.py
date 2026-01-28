@@ -43,6 +43,9 @@ from app.academics.models.lesson_plans import (
     LessonPlan, LessonPlanUnit, TeachingProgress
 )
 
+# Teaching Assignments (Phase 2)
+from app.academics.models.teaching_assignments import TeachingAssignment
+
 # Alembic Config object
 config = context.config
 

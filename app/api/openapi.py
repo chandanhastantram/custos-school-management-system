@@ -38,6 +38,10 @@ OPENAPI_TAGS: List[Dict[str, Any]] = [
         "description": "Lesson plans, units, and teaching progress tracking",
     },
     {
+        "name": "Teaching Assignments",
+        "description": "Teacher ↔ Class ↔ Subject mappings for academic year",
+    },
+    {
         "name": "Questions",
         "description": "Question bank management - create, review, approve",
     },
