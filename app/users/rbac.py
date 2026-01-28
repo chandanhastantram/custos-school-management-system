@@ -57,6 +57,7 @@ class Permission(str, Enum):
     SYLLABUS_VIEW = "syllabus:view"
     SYLLABUS_CREATE = "syllabus:create"
     SYLLABUS_UPDATE = "syllabus:update"
+    SYLLABUS_DELETE = "syllabus:delete"
     
     LESSON_VIEW = "lesson:view"
     LESSON_CREATE = "lesson:create"

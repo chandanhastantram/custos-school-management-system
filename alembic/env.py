@@ -33,6 +33,11 @@ from app.platform.audit.models import AuditLog
 from app.platform.admin.models import PlatformAdmin, PlatformSettings
 from app.platform.usage.tracking import FeatureUsage
 
+# Syllabus Engine (Phase 2)
+from app.academics.models.syllabus import (
+    Board, ClassLevel, SyllabusSubject, Chapter, SyllabusTopic, TopicWeightage
+)
+
 # Alembic Config object
 config = context.config
 

@@ -30,6 +30,10 @@ OPENAPI_TAGS: List[Dict[str, Any]] = [
         "description": "Academic years, classes, and sections",
     },
     {
+        "name": "Syllabus",
+        "description": "Curriculum management - Boards, Class Levels, Subjects, Chapters, Topics",
+    },
+    {
         "name": "Questions",
         "description": "Question bank management - create, review, approve",
     },
