@@ -31,6 +31,7 @@ from app.platform.notifications.models import Notification
 from app.platform.gamification.models import Points, Badge, UserBadge
 from app.platform.audit.models import AuditLog
 from app.platform.admin.models import PlatformAdmin, PlatformSettings
+from app.platform.usage.tracking import FeatureUsage
 
 # Alembic Config object
 config = context.config

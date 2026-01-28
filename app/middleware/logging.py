@@ -1,89 +1,147 @@
 """
 CUSTOS Request Logging Middleware
 
-Logs all HTTP requests and responses.
+Logs all incoming requests with timing and tracing.
 """
 
 import time
 import logging
-from typing import Callable
+import uuid as uuid_lib
+from contextvars import ContextVar
 
-from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 
 
 logger = logging.getLogger("custos.requests")
 
+# Context variable for request tracing
+request_id_ctx: ContextVar[str] = ContextVar("request_id", default="")
+tenant_id_ctx: ContextVar[str] = ContextVar("tenant_id", default="")
+
+
+def get_request_id() -> str:
+    """Get current request ID from context."""
+    return request_id_ctx.get()
+
+
+def get_tenant_id() -> str:
+    """Get current tenant ID from context."""
+    return tenant_id_ctx.get()
+
+
+class RequestContextFilter(logging.Filter):
+    """Logging filter that adds request context to log records."""
+    
+    def filter(self, record):
+        record.request_id = get_request_id() or "-"
+        record.tenant_id = get_tenant_id() or "-"
+        return True
+
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """
-    Middleware to log all HTTP requests.
+    Middleware for request logging with tracing.
     
-    Logs:
-    - Method, path, status code
-    - Processing time
-    - Client IP
-    - User ID (if authenticated)
+    Features:
+    - Generates unique request ID for tracing
+    - Logs request method, path, duration
+    - Adds request ID to response headers
+    - Sets context variables for downstream logging
     """
     
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """Process and log request."""
-        start_time = time.time()
+    async def dispatch(self, request: Request, call_next):
+        # Generate request ID
+        request_id = request.headers.get("X-Request-ID") or str(uuid_lib.uuid4())[:8]
         
-        # Get client info
-        client_ip = request.client.host if request.client else "unknown"
+        # Set context variables
+        request_id_ctx.set(request_id)
         
-        # Process request
-        response = await call_next(request)
+        # Store in request state
+        request.state.request_id = request_id
         
-        # Calculate duration
-        duration_ms = (time.time() - start_time) * 1000
-        
-        # Get user ID if available
-        user_id = getattr(request.state, "user_id", None)
+        # Get tenant from state (if set by TenantMiddleware)
         tenant_id = getattr(request.state, "tenant_id", None)
+        if tenant_id:
+            tenant_id_ctx.set(str(tenant_id))
         
-        # Log request
-        log_data = {
-            "method": request.method,
-            "path": request.url.path,
-            "status": response.status_code,
-            "duration_ms": round(duration_ms, 2),
-            "client_ip": client_ip,
-            "tenant_id": str(tenant_id) if tenant_id else None,
-            "user_id": str(user_id) if user_id else None,
-        }
+        start_time = time.perf_counter()
         
-        if response.status_code >= 400:
-            logger.warning(f"Request: {log_data}")
-        else:
-            logger.info(f"Request: {log_data}")
+        # Log request start
+        logger.info(
+            f"[{request_id}] {request.method} {request.url.path} - Started",
+            extra={
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "client_ip": request.client.host if request.client else None,
+            }
+        )
         
-        # Add timing header
-        response.headers["X-Process-Time"] = f"{duration_ms:.2f}ms"
-        
-        return response
-
-
-class SlowRequestMiddleware(BaseHTTPMiddleware):
-    """
-    Middleware to detect and log slow requests.
-    """
-    
-    SLOW_REQUEST_THRESHOLD_MS = 1000  # 1 second
-    
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """Check for slow requests."""
-        start_time = time.time()
-        
-        response = await call_next(request)
-        
-        duration_ms = (time.time() - start_time) * 1000
-        
-        if duration_ms > self.SLOW_REQUEST_THRESHOLD_MS:
-            logger.warning(
-                f"Slow request detected: {request.method} {request.url.path} "
-                f"took {duration_ms:.2f}ms"
+        try:
+            response = await call_next(request)
+            
+            # Calculate duration
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            
+            # Add tracing headers to response
+            response.headers["X-Request-ID"] = request_id
+            response.headers["X-Response-Time"] = f"{duration_ms:.2f}ms"
+            
+            # Log request completion
+            log_level = logging.WARNING if response.status_code >= 400 else logging.INFO
+            logger.log(
+                log_level,
+                f"[{request_id}] {request.method} {request.url.path} - "
+                f"{response.status_code} ({duration_ms:.2f}ms)",
+                extra={
+                    "request_id": request_id,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "status_code": response.status_code,
+                    "duration_ms": duration_ms,
+                }
             )
-        
-        return response
+            
+            return response
+            
+        except Exception as e:
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            logger.error(
+                f"[{request_id}] {request.method} {request.url.path} - "
+                f"Error: {str(e)} ({duration_ms:.2f}ms)",
+                exc_info=True,
+                extra={
+                    "request_id": request_id,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "duration_ms": duration_ms,
+                    "error": str(e),
+                }
+            )
+            raise
+        finally:
+            # Clear context
+            request_id_ctx.set("")
+            tenant_id_ctx.set("")
+
+
+def setup_logging(debug: bool = False):
+    """Configure logging with request context."""
+    log_format = (
+        "%(asctime)s | %(levelname)-8s | "
+        "[%(request_id)s] [tenant:%(tenant_id)s] | "
+        "%(name)s:%(lineno)d | %(message)s"
+    )
+    
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter(log_format))
+    handler.addFilter(RequestContextFilter())
+    
+    root_logger = logging.getLogger("custos")
+    root_logger.setLevel(logging.DEBUG if debug else logging.INFO)
+    root_logger.addHandler(handler)
+    
+    # Also configure uvicorn access logs
+    uvicorn_logger = logging.getLogger("uvicorn.access")
+    uvicorn_logger.addFilter(RequestContextFilter())

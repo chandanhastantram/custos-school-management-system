@@ -15,17 +15,15 @@ from app.core.config import settings
 from app.core.database import init_db, close_db
 from app.core.exceptions import CustosException
 from app.middleware.tenant import TenantMiddleware
-from app.middleware.logging import RequestLoggingMiddleware
+from app.middleware.logging import RequestLoggingMiddleware, setup_logging
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.api.v1 import router as v1_router
 from app.api.health import router as health_router
+from app.api.openapi import OPENAPI_TAGS
 
 
-# Configure logging
-logging.basicConfig(
-    level=logging.DEBUG if settings.debug else logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+# Configure logging with request tracing
+setup_logging(debug=settings.debug)
 logger = logging.getLogger("custos")
 
 
@@ -49,10 +47,41 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
-        description="AI-Powered School Management System",
+        description="""
+# CUSTOS - AI-Powered School Management System
+
+A modern, multi-tenant SaaS platform for educational institutions.
+
+## Features
+
+- 🏫 **Multi-Tenant Architecture** - Complete data isolation per school
+- 👥 **User Management** - Students, teachers, parents, admins
+- 📚 **Academic Management** - Classes, subjects, syllabus, assignments
+- 🤖 **AI-Powered** - Lesson plans, question generation, doubt solver
+- 🎮 **Gamification** - Points, badges, leaderboards
+- 📊 **Reports** - Student, class, and teacher analytics
+- 💳 **SaaS Billing** - Subscription plans and usage tracking
+
+## Authentication
+
+All endpoints (except health checks) require JWT authentication.
+Include the token in the `Authorization` header: `Bearer <token>`
+
+## Multi-Tenancy
+
+Include tenant identifier in the `X-Tenant-ID` header for all requests.
+        """,
         docs_url="/docs" if settings.debug else None,
         redoc_url="/redoc" if settings.debug else None,
+        openapi_tags=OPENAPI_TAGS,
         lifespan=lifespan,
+        license_info={
+            "name": "Proprietary",
+        },
+        contact={
+            "name": "CUSTOS Support",
+            "email": "support@custos.school",
+        },
     )
     
     # CORS
@@ -62,6 +91,7 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["X-Request-ID", "X-Response-Time", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
     )
     
     # Custom middleware (order matters - first added = outermost)
@@ -72,6 +102,7 @@ def create_app() -> FastAPI:
     # Exception handlers
     @app.exception_handler(CustosException)
     async def custos_exception_handler(request: Request, exc: CustosException):
+        request_id = getattr(request.state, "request_id", "-")
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -79,19 +110,24 @@ def create_app() -> FastAPI:
                 "message": exc.message,
                 "code": exc.code,
                 "details": exc.details,
+                "request_id": request_id,
             },
+            headers={"X-Request-ID": request_id},
         )
     
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception):
-        logger.exception(f"Unhandled exception: {exc}")
+        request_id = getattr(request.state, "request_id", "-")
+        logger.exception(f"[{request_id}] Unhandled exception: {exc}")
         return JSONResponse(
             status_code=500,
             content={
                 "success": False,
                 "message": "Internal server error",
                 "code": "INTERNAL_ERROR",
+                "request_id": request_id,
             },
+            headers={"X-Request-ID": request_id},
         )
     
     # Routers
@@ -109,7 +145,7 @@ if __name__ == "__main__":
     import uvicorn
     
     uvicorn.run(
-        "app_new.main:app",
+        "app.main:app",
         host=settings.host,
         port=settings.port,
         reload=settings.debug,
