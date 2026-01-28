@@ -1,0 +1,3 @@
+"""
+CUSTOS Posts Module
+"""

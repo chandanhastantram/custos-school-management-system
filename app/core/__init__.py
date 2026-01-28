@@ -1,143 +1,19 @@
 """
-CUSTOS Core Package
+CUSTOS Core Module
 
-Core infrastructure components.
+Cross-cutting concerns: configuration, database, security, exceptions.
 """
 
-from app.core.config import settings, get_settings
-from app.core.database import (
-    Base,
-    engine,
-    async_session_factory,
-    get_db,
-    get_session,
-    TenantSession,
-    init_db,
-    close_db,
-)
-from app.core.redis import (
-    init_redis,
-    close_redis,
-    get_redis,
-    CacheManager,
-    TenantCacheManager,
-    RateLimiter,
-    SessionStore,
-    get_cache_manager,
-    get_tenant_cache_manager,
-    get_rate_limiter,
-    get_session_store,
-)
-from app.core.security import (
-    hash_password,
-    verify_password,
-    generate_token,
-    generate_verification_code,
-    generate_api_key,
-    hash_token,
-    generate_password_reset_token,
-    get_utc_now,
-    get_expiry_time,
-    is_expired,
-    SecureData,
-    PasswordPolicy,
-    password_policy,
-)
-from app.core.exceptions import (
-    CustosException,
-    AuthenticationError,
-    AuthorizationError,
-    TenantError,
-    TenantNotFoundError,
-    TenantSuspendedError,
-    ResourceNotFoundError,
-    ValidationError,
-    DuplicateError,
-    RateLimitError,
-    QuotaExceededError,
-    SubscriptionError,
-    SubscriptionRequiredError,
-    PlanLimitError,
-    AIServiceError,
-    AITokenLimitError,
-    StorageError,
-    ExternalServiceError,
-    http_400,
-    http_401,
-    http_403,
-    http_404,
-    http_409,
-    http_422,
-    http_429,
-    http_500,
-    http_503,
-)
+from app.core.config import settings
+from app.core.database import get_db, engine
+from app.core.exceptions import CustosException
+from app.core.base_model import BaseModel, TenantBaseModel
 
 __all__ = [
-    # Config
     "settings",
-    "get_settings",
-    # Database
-    "Base",
-    "engine",
-    "async_session_factory",
     "get_db",
-    "get_session",
-    "TenantSession",
-    "init_db",
-    "close_db",
-    # Redis
-    "init_redis",
-    "close_redis",
-    "get_redis",
-    "CacheManager",
-    "TenantCacheManager",
-    "RateLimiter",
-    "SessionStore",
-    "get_cache_manager",
-    "get_tenant_cache_manager",
-    "get_rate_limiter",
-    "get_session_store",
-    # Security
-    "hash_password",
-    "verify_password",
-    "generate_token",
-    "generate_verification_code",
-    "generate_api_key",
-    "hash_token",
-    "generate_password_reset_token",
-    "get_utc_now",
-    "get_expiry_time",
-    "is_expired",
-    "SecureData",
-    "PasswordPolicy",
-    "password_policy",
-    # Exceptions
+    "engine",
     "CustosException",
-    "AuthenticationError",
-    "AuthorizationError",
-    "TenantError",
-    "TenantNotFoundError",
-    "TenantSuspendedError",
-    "ResourceNotFoundError",
-    "ValidationError",
-    "DuplicateError",
-    "RateLimitError",
-    "QuotaExceededError",
-    "SubscriptionError",
-    "SubscriptionRequiredError",
-    "PlanLimitError",
-    "AIServiceError",
-    "AITokenLimitError",
-    "StorageError",
-    "ExternalServiceError",
-    "http_400",
-    "http_401",
-    "http_403",
-    "http_404",
-    "http_409",
-    "http_422",
-    "http_429",
-    "http_500",
-    "http_503",
+    "BaseModel",
+    "TenantBaseModel",
 ]

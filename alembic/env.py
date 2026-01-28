@@ -1,5 +1,7 @@
 """
 Alembic Environment Configuration
+
+Updated for app_new structure.
 """
 
 import asyncio
@@ -11,9 +13,24 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-# Import your models
-from app.core.database import Base
-from app.models import *  # noqa: F401, F403
+# Import base and all models for new structure
+from app.core.base_model import BaseModel
+
+# Import all models to register them with Base.metadata
+from app.tenants.models import Tenant, TenantSettings
+from app.tenants.modules import TenantModuleAccess
+from app.users.models import User, Role, Permission, StudentProfile, TeacherProfile, ParentProfile
+from app.users.pre_registration import PreRegisteredUser
+from app.auth.models import RefreshToken, PasswordResetToken, LoginAttempt
+from app.academics.models.structure import AcademicYear, Class, Section
+from app.academics.models.curriculum import Subject, Syllabus, Topic, Lesson
+from app.academics.models.questions import Question
+from app.academics.models.assignments import Assignment, AssignmentQuestion, Submission, SubmissionAnswer
+from app.billing.models import Plan, Subscription, UsageLimit
+from app.platform.notifications.models import Notification
+from app.platform.gamification.models import Points, Badge, UserBadge
+from app.platform.audit.models import AuditLog
+from app.platform.admin.models import PlatformAdmin, PlatformSettings
 
 # Alembic Config object
 config = context.config
@@ -23,7 +40,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Add your model's MetaData object here
-target_metadata = Base.metadata
+target_metadata = BaseModel.metadata
 
 
 def get_url():
