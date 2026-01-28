@@ -34,6 +34,10 @@ OPENAPI_TAGS: List[Dict[str, Any]] = [
         "description": "Curriculum management - Boards, Class Levels, Subjects, Chapters, Topics",
     },
     {
+        "name": "Lesson Planning",
+        "description": "Lesson plans, units, and teaching progress tracking",
+    },
+    {
         "name": "Questions",
         "description": "Question bank management - create, review, approve",
     },

@@ -38,6 +38,11 @@ from app.academics.models.syllabus import (
     Board, ClassLevel, SyllabusSubject, Chapter, SyllabusTopic, TopicWeightage
 )
 
+# Lesson Planning (Phase 2)
+from app.academics.models.lesson_plans import (
+    LessonPlan, LessonPlanUnit, TeachingProgress
+)
+
 # Alembic Config object
 config = context.config
 

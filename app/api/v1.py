@@ -16,6 +16,7 @@ from app.academics.routers.structure import router as structure_router
 from app.academics.routers.questions import router as questions_router
 from app.academics.routers.assignments import router as assignments_router
 from app.academics.routers.syllabus import router as syllabus_router
+from app.academics.routers.lesson_plans import router as lesson_plans_router
 
 # AI
 from app.ai.router import router as ai_router
@@ -53,6 +54,9 @@ router.include_router(assignments_router, prefix="/assignments")
 
 # Syllabus Engine (Curriculum)
 router.include_router(syllabus_router, prefix="/academics/syllabus")
+
+# Lesson Planning
+router.include_router(lesson_plans_router, prefix="/academics/lesson-plans")
 
 # AI Features
 router.include_router(ai_router, prefix="/ai")
