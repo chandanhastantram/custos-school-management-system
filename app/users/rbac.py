@@ -137,6 +137,12 @@ class Permission(str, Enum):
     DAILY_LOOP_VIEW = "daily_loop:view"
     DAILY_LOOP_START = "daily_loop:start"
     DAILY_LOOP_ATTEMPT = "daily_loop:attempt"
+    
+    # Weekly Evaluation
+    WEEKLY_TEST_VIEW = "weekly_test:view"
+    WEEKLY_TEST_CREATE = "weekly_test:create"
+    WEEKLY_TEST_GENERATE = "weekly_test:generate"
+    WEEKLY_TEST_SUBMIT_RESULT = "weekly_test:submit_result"
 
 
 # Role-Permission mapping
@@ -188,6 +194,10 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.SCHEDULE_UPDATE,
         Permission.DAILY_LOOP_VIEW,
         Permission.DAILY_LOOP_START,
+        Permission.WEEKLY_TEST_VIEW,
+        Permission.WEEKLY_TEST_CREATE,
+        Permission.WEEKLY_TEST_GENERATE,
+        Permission.WEEKLY_TEST_SUBMIT_RESULT,
     },
     
     SystemRole.SUB_ADMIN: {
@@ -243,6 +253,10 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.SCHEDULE_UPDATE,
         Permission.DAILY_LOOP_VIEW,
         Permission.DAILY_LOOP_START,
+        Permission.WEEKLY_TEST_VIEW,
+        Permission.WEEKLY_TEST_CREATE,
+        Permission.WEEKLY_TEST_GENERATE,
+        Permission.WEEKLY_TEST_SUBMIT_RESULT,
     },
     
     SystemRole.STUDENT: {
@@ -262,6 +276,7 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.SCHEDULE_VIEW,
         Permission.DAILY_LOOP_VIEW,
         Permission.DAILY_LOOP_ATTEMPT,
+        Permission.WEEKLY_TEST_VIEW,
     },
     
     SystemRole.PARENT: {

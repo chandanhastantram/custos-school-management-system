@@ -23,7 +23,30 @@ from app.learning.schemas.daily_loops import (
     DailyLoopStats,
 )
 
+from app.learning.schemas.weekly_tests import (
+    WeeklyTestStatus,
+    QuestionStrengthType,
+    WeeklyTestCreate,
+    WeeklyTestUpdate,
+    WeeklyTestResponse,
+    WeeklyTestWithDetails,
+    WeeklyTestQuestionResponse,
+    WeeklyTestQuestionWithContent,
+    WeeklyTestPaper,
+    WeeklyTestAnswerKey,
+    StudentResultSubmit,
+    BulkResultSubmit,
+    WeeklyTestResultResponse,
+    WeeklyTestResultWithDetails,
+    WeeklyPerformanceResponse,
+    StudentWeeklyHistory,
+    GeneratePaperRequest,
+    GeneratePaperResult,
+    WeeklyTestStats,
+)
+
 __all__ = [
+    # Daily Loops
     "MasteryLevel",
     "DailySessionCreate",
     "DailySessionResponse",
@@ -42,4 +65,24 @@ __all__ = [
     "QuestionForAttempt",
     "TodaySessionInfo",
     "DailyLoopStats",
+    # Weekly Tests
+    "WeeklyTestStatus",
+    "QuestionStrengthType",
+    "WeeklyTestCreate",
+    "WeeklyTestUpdate",
+    "WeeklyTestResponse",
+    "WeeklyTestWithDetails",
+    "WeeklyTestQuestionResponse",
+    "WeeklyTestQuestionWithContent",
+    "WeeklyTestPaper",
+    "WeeklyTestAnswerKey",
+    "StudentResultSubmit",
+    "BulkResultSubmit",
+    "WeeklyTestResultResponse",
+    "WeeklyTestResultWithDetails",
+    "WeeklyPerformanceResponse",
+    "StudentWeeklyHistory",
+    "GeneratePaperRequest",
+    "GeneratePaperResult",
+    "WeeklyTestStats",
 ]
