@@ -44,6 +44,12 @@ class Permission(str, Enum):
     TEACHER_UPDATE = "teacher:update"
     TEACHER_DELETE = "teacher:delete"
     
+    # Teaching Assignments (Teacher ↔ Class ↔ Subject)
+    TEACHING_ASSIGNMENT_VIEW = "teaching_assignment:view"
+    TEACHING_ASSIGNMENT_CREATE = "teaching_assignment:create"
+    TEACHING_ASSIGNMENT_UPDATE = "teaching_assignment:update"
+    TEACHING_ASSIGNMENT_DELETE = "teaching_assignment:delete"
+    
     # Academic Structure
     CLASS_VIEW = "class:view"
     CLASS_CREATE = "class:create"
@@ -104,6 +110,12 @@ class Permission(str, Enum):
     TIMETABLE_VIEW = "timetable:view"
     TIMETABLE_CREATE = "timetable:create"
     TIMETABLE_UPDATE = "timetable:update"
+    TIMETABLE_DELETE = "timetable:delete"
+    
+    # Schedule Orchestration
+    SCHEDULE_VIEW = "schedule:view"
+    SCHEDULE_GENERATE = "schedule:generate"
+    SCHEDULE_UPDATE = "schedule:update"
     
     # Posts
     POST_VIEW = "post:view"
@@ -156,10 +168,19 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.CALENDAR_CREATE,
         Permission.TIMETABLE_VIEW,
         Permission.TIMETABLE_CREATE,
+        Permission.TIMETABLE_UPDATE,
+        Permission.TIMETABLE_DELETE,
         Permission.POST_VIEW,
         Permission.POST_CREATE,
         Permission.NOTIFICATION_SEND,
         Permission.BILLING_VIEW,
+        Permission.TEACHING_ASSIGNMENT_VIEW,
+        Permission.TEACHING_ASSIGNMENT_CREATE,
+        Permission.TEACHING_ASSIGNMENT_UPDATE,
+        Permission.TEACHING_ASSIGNMENT_DELETE,
+        Permission.SCHEDULE_VIEW,
+        Permission.SCHEDULE_GENERATE,
+        Permission.SCHEDULE_UPDATE,
     },
     
     SystemRole.SUB_ADMIN: {
@@ -176,6 +197,12 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.CALENDAR_CREATE,
         Permission.POST_VIEW,
         Permission.POST_CREATE,
+        Permission.TEACHING_ASSIGNMENT_VIEW,
+        Permission.TEACHING_ASSIGNMENT_CREATE,
+        Permission.TEACHING_ASSIGNMENT_UPDATE,
+        Permission.TEACHING_ASSIGNMENT_DELETE,
+        Permission.SCHEDULE_VIEW,
+        Permission.SCHEDULE_GENERATE,
     },
     
     SystemRole.TEACHER: {
@@ -203,6 +230,10 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.CALENDAR_VIEW,
         Permission.TIMETABLE_VIEW,
         Permission.POST_VIEW,
+        Permission.TEACHING_ASSIGNMENT_VIEW,
+        Permission.SCHEDULE_VIEW,
+        Permission.SCHEDULE_GENERATE,
+        Permission.SCHEDULE_UPDATE,
     },
     
     SystemRole.STUDENT: {
@@ -219,6 +250,7 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.CALENDAR_VIEW,
         Permission.TIMETABLE_VIEW,
         Permission.POST_VIEW,
+        Permission.SCHEDULE_VIEW,
     },
     
     SystemRole.PARENT: {

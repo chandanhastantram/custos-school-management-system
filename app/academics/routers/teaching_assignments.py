@@ -37,7 +37,7 @@ async def create_teaching_assignment(
     data: TeachingAssignmentCreate,
     user: CurrentUser,
     db: AsyncSession = Depends(get_db),
-    _=Depends(require_permission(Permission.TEACHER_CREATE)),
+    _=Depends(require_permission(Permission.TEACHING_ASSIGNMENT_CREATE)),
 ):
     """
     Create a teaching assignment (Admin only).
@@ -53,7 +53,7 @@ async def create_teaching_assignments_bulk(
     data: TeachingAssignmentBulkCreate,
     user: CurrentUser,
     db: AsyncSession = Depends(get_db),
-    _=Depends(require_permission(Permission.TEACHER_CREATE)),
+    _=Depends(require_permission(Permission.TEACHING_ASSIGNMENT_CREATE)),
 ):
     """
     Create multiple teaching assignments at once (Admin only).
@@ -77,7 +77,7 @@ async def list_teaching_assignments(
     is_primary: Optional[bool] = None,
     page: int = Query(1, ge=1),
     size: int = Query(50, ge=1, le=100),
-    _=Depends(require_permission(Permission.TEACHER_VIEW)),
+    _=Depends(require_permission(Permission.TEACHING_ASSIGNMENT_VIEW)),
 ):
     """
     List teaching assignments with filters.
@@ -119,7 +119,7 @@ async def get_assignment_stats(
     user: CurrentUser,
     db: AsyncSession = Depends(get_db),
     academic_year_id: Optional[UUID] = None,
-    _=Depends(require_permission(Permission.TEACHER_VIEW)),
+    _=Depends(require_permission(Permission.TEACHING_ASSIGNMENT_VIEW)),
 ):
     """Get teaching assignment statistics."""
     service = TeachingAssignmentService(db, user.tenant_id)
@@ -153,7 +153,7 @@ async def get_teaching_assignment(
     assignment_id: UUID,
     user: CurrentUser,
     db: AsyncSession = Depends(get_db),
-    _=Depends(require_permission(Permission.TEACHER_VIEW)),
+    _=Depends(require_permission(Permission.TEACHING_ASSIGNMENT_VIEW)),
 ):
     """Get a specific teaching assignment."""
     service = TeachingAssignmentService(db, user.tenant_id)
@@ -166,7 +166,7 @@ async def update_teaching_assignment(
     data: TeachingAssignmentUpdate,
     user: CurrentUser,
     db: AsyncSession = Depends(get_db),
-    _=Depends(require_permission(Permission.TEACHER_UPDATE)),
+    _=Depends(require_permission(Permission.TEACHING_ASSIGNMENT_UPDATE)),
 ):
     """Update a teaching assignment (Admin only)."""
     service = TeachingAssignmentService(db, user.tenant_id)
@@ -178,7 +178,7 @@ async def delete_teaching_assignment(
     assignment_id: UUID,
     user: CurrentUser,
     db: AsyncSession = Depends(get_db),
-    _=Depends(require_permission(Permission.TEACHER_DELETE)),
+    _=Depends(require_permission(Permission.TEACHING_ASSIGNMENT_DELETE)),
 ):
     """Delete a teaching assignment (Admin only)."""
     service = TeachingAssignmentService(db, user.tenant_id)
@@ -190,7 +190,7 @@ async def deactivate_teaching_assignment(
     assignment_id: UUID,
     user: CurrentUser,
     db: AsyncSession = Depends(get_db),
-    _=Depends(require_permission(Permission.TEACHER_UPDATE)),
+    _=Depends(require_permission(Permission.TEACHING_ASSIGNMENT_UPDATE)),
 ):
     """Deactivate a teaching assignment (instead of deleting)."""
     service = TeachingAssignmentService(db, user.tenant_id)
@@ -207,7 +207,7 @@ async def get_assignments_by_teacher(
     user: CurrentUser,
     db: AsyncSession = Depends(get_db),
     academic_year_id: Optional[UUID] = None,
-    _=Depends(require_permission(Permission.TEACHER_VIEW)),
+    _=Depends(require_permission(Permission.TEACHING_ASSIGNMENT_VIEW)),
 ):
     """Get all assignments for a specific teacher."""
     service = TeachingAssignmentService(db, user.tenant_id)
@@ -220,7 +220,7 @@ async def get_teacher_summary(
     user: CurrentUser,
     db: AsyncSession = Depends(get_db),
     academic_year_id: Optional[UUID] = None,
-    _=Depends(require_permission(Permission.TEACHER_VIEW)),
+    _=Depends(require_permission(Permission.TEACHING_ASSIGNMENT_VIEW)),
 ):
     """Get assignment summary for a specific teacher."""
     service = TeachingAssignmentService(db, user.tenant_id)
@@ -274,7 +274,7 @@ async def lookup_teacher_for_class_subject(
     user: CurrentUser,
     db: AsyncSession = Depends(get_db),
     section_id: Optional[UUID] = None,
-    _=Depends(require_permission(Permission.TEACHER_VIEW)),
+    _=Depends(require_permission(Permission.TEACHING_ASSIGNMENT_VIEW)),
 ):
     """
     Lookup the primary teacher for a class-subject combination.
