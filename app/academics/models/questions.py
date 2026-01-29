@@ -52,7 +52,7 @@ class Question(TenantBaseModel):
     __tablename__ = "questions"
     
     subject_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("subjects.id"))
-    topic_id: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("topics.id"), nullable=True)
+    topic_id: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("syllabus_topics.id"), nullable=True)
     created_by: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"))
     
     question_type: Mapped[QuestionType] = mapped_column(SQLEnum(QuestionType), nullable=False)

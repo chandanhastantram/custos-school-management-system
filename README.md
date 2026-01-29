@@ -51,9 +51,11 @@ CUSTOS is a comprehensive, AI-powered school management SaaS platform designed f
 - Performance tracking
 
 ### 🤖 AI Features
-- **Lesson Plan Generator** - Create comprehensive lesson plans
-- **Question Generator** - Generate questions by topic/difficulty
+- **Lesson Plan Generator** - Create comprehensive lesson plans from syllabus
+- **Question Generator** - Generate MCQs and questions by topic/difficulty
 - **Doubt Solver** - AI tutor for student questions
+- **OCR Engine** - Process exam answer sheets
+- **Per-plan quotas** - Different limits by subscription tier
 - Usage tracking per tenant
 
 ### 📊 Analytics & Reports
@@ -74,7 +76,8 @@ CUSTOS is a comprehensive, AI-powered school management SaaS platform designed f
 - **Database**: PostgreSQL with SQLAlchemy (async)
 - **Authentication**: JWT with bcrypt
 - **AI**: OpenAI GPT-4
-- **Task Queue**: Background tasks (no Redis)
+- **Task Queue**: Redis Queue (RQ) for background jobs
+- **Matching**: Fuzzy matching for OCR identifiers
 - **Migrations**: Alembic
 
 ## 📦 Installation

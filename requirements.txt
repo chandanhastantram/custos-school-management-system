@@ -27,6 +27,11 @@ openai==1.10.0
 python-dotenv==1.0.0
 httpx==0.26.0
 tenacity==8.2.3
+thefuzz[speedup]==0.22.1  # Fuzzy matching
+
+# Background Queue
+redis==5.0.1
+rq==1.16.1
 
 # Development
 pytest==7.4.4

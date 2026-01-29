@@ -34,9 +34,9 @@ from app.ai.schemas import (
 )
 from app.ai.providers.openai import OpenAIProvider
 from app.academics.models.lesson_plans import LessonPlan, LessonPlanUnit, LessonPlanStatus
-from app.academics.models.syllabus import SyllabusSubject, SyllabusUnit, SyllabusTopic
-from app.academics.models.classes import Class
-from app.academics.models.subjects import Subject
+from app.academics.models.syllabus import SyllabusSubject, Chapter, SyllabusTopic
+from app.academics.models.structure import Class
+from app.academics.models.curriculum import Subject
 from app.scheduling.models.timetable import TimetableEntry
 
 
@@ -210,33 +210,33 @@ class AILessonPlanService:
     
     async def _get_syllabus_topics(self, syllabus_subject_id: UUID) -> List[dict]:
         """Get all topics from syllabus in order."""
-        # Get units first
-        units_query = select(SyllabusUnit).where(
-            SyllabusUnit.syllabus_subject_id == syllabus_subject_id,
-            SyllabusUnit.tenant_id == self.tenant_id,
-            SyllabusUnit.deleted_at.is_(None),
-        ).order_by(SyllabusUnit.order)
+        # Get chapters first (chapters are the units/sections of a syllabus subject)
+        chapters_query = select(Chapter).where(
+            Chapter.subject_id == syllabus_subject_id,
+            Chapter.tenant_id == self.tenant_id,
+            Chapter.is_deleted == False,
+        ).order_by(Chapter.order)
         
-        result = await self.session.execute(units_query)
-        units = result.scalars().all()
+        result = await self.session.execute(chapters_query)
+        chapters = result.scalars().all()
         
         topics = []
-        for unit in units:
-            # Get topics for this unit
+        for chapter in chapters:
+            # Get topics for this chapter
             topics_query = select(SyllabusTopic).where(
-                SyllabusTopic.unit_id == unit.id,
+                SyllabusTopic.chapter_id == chapter.id,
                 SyllabusTopic.tenant_id == self.tenant_id,
-                SyllabusTopic.deleted_at.is_(None),
+                SyllabusTopic.is_deleted == False,
             ).order_by(SyllabusTopic.order)
             
             result = await self.session.execute(topics_query)
-            unit_topics = result.scalars().all()
+            chapter_topics = result.scalars().all()
             
-            for topic in unit_topics:
+            for topic in chapter_topics:
                 topics.append({
                     "id": topic.id,
                     "name": topic.name,
-                    "unit_name": unit.name,
+                    "unit_name": chapter.name,
                     "order": len(topics) + 1,
                     "description": topic.description,
                 })

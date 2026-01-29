@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     rate_limit_requests: int = 100
     rate_limit_window_seconds: int = 60
     
+    # Redis (for background tasks)
+    redis_url: str = "redis://localhost:6379/0"
+    redis_password: Optional[str] = None
+    
     class Config:
         env_file = ".env"
         case_sensitive = False

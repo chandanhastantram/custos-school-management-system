@@ -31,6 +31,7 @@ from app.learning.routers.lesson_evaluation import router as lesson_evaluation_r
 # AI
 from app.ai.router import router as ai_router
 from app.ai.ocr_router import router as ocr_router
+from app.ai.question_gen_router import router as question_gen_router
 
 # Billing
 from app.billing.router import router as billing_router
@@ -92,6 +93,9 @@ router.include_router(ai_router, prefix="/ai")
 
 # AI OCR Engine
 router.include_router(ocr_router, prefix="/ai/ocr")
+
+# AI Question Generator
+router.include_router(question_gen_router, prefix="/ai")
 
 # Billing
 router.include_router(billing_router, prefix="/billing")

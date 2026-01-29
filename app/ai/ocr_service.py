@@ -321,32 +321,18 @@ class OCRService:
         return ""
     
     async def _match_student(self, identifier: str) -> Optional[UUID]:
-        """Try to match student identifier to a user."""
+        """Try to match student identifier to a user using fuzzy matching."""
         if not identifier:
             return None
         
-        identifier = identifier.strip()
+        from app.ai.fuzzy_matcher import FuzzyMatcher
         
-        # Try matching by roll number or name
-        query = select(User).where(
-            User.tenant_id == self.tenant_id,
-            User.deleted_at.is_(None),
+        matcher = FuzzyMatcher(self.session, self.tenant_id)
+        student_id, confidence = await matcher.match_student(
+            identifier, min_confidence=0.6
         )
         
-        result = await self.session.execute(query)
-        users = result.scalars().all()
-        
-        for user in users:
-            # Check roll number (if stored in profile)
-            if hasattr(user, 'student_profile') and user.student_profile:
-                if user.student_profile.roll_number == identifier:
-                    return user.id
-            
-            # Check name (case-insensitive partial match)
-            if user.full_name and identifier.lower() in user.full_name.lower():
-                return user.id
-        
-        return None
+        return student_id
     
     # ============================================
     # Import Results

@@ -9,7 +9,7 @@ from enum import Enum
 from typing import Optional, TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import String, Text, Boolean, Integer, Float, DateTime, JSON, ForeignKey, Enum as SQLEnum
+from sqlalchemy import String, Text, Boolean, Integer, Float, DateTime, JSON, ForeignKey, Index, Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -73,6 +73,9 @@ class Subscription(TenantBaseModel):
     
     plan_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("plans.id"))
     
+    # Tier for quick quota lookup (denormalized from plan)
+    tier: Mapped[PlanTier] = mapped_column(SQLEnum(PlanTier), default=PlanTier.STARTER)
+    
     status: Mapped[SubscriptionStatus] = mapped_column(
         SQLEnum(SubscriptionStatus), default=SubscriptionStatus.TRIAL
     )
@@ -97,12 +100,31 @@ class UsageLimit(TenantBaseModel):
     """Usage tracking per tenant."""
     __tablename__ = "usage_limits"
     
+    __table_args__ = (
+        Index("ix_usage_tenant_period", "tenant_id", "year", "month"),
+    )
+    
     year: Mapped[int] = mapped_column(Integer, nullable=False)
     month: Mapped[int] = mapped_column(Integer, nullable=False)
     
-    # Usage counts
+    # User counts
     student_count: Mapped[int] = mapped_column(Integer, default=0)
     teacher_count: Mapped[int] = mapped_column(Integer, default=0)
+    
+    # Question bank usage
     question_count: Mapped[int] = mapped_column(Integer, default=0)
+    
+    # AI usage - general
     ai_requests_used: Mapped[int] = mapped_column(Integer, default=0)
+    
+    # AI usage - specific quotas (for per-plan limits)
+    ocr_requests_used: Mapped[int] = mapped_column(Integer, default=0)
+    lesson_plan_gen_used: Mapped[int] = mapped_column(Integer, default=0)
+    question_gen_used: Mapped[int] = mapped_column(Integer, default=0)
+    doubt_solver_used: Mapped[int] = mapped_column(Integer, default=0)
+    
+    # Token tracking (for cost analysis)
+    total_tokens_used: Mapped[int] = mapped_column(Integer, default=0)
+    
+    # Storage
     storage_used_mb: Mapped[float] = mapped_column(Float, default=0)

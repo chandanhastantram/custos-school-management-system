@@ -50,8 +50,16 @@ OPENAPI_TAGS: List[Dict[str, Any]] = [
         "description": "Assignments, submissions, and grading",
     },
     {
-        "name": "AI",
+        "name": "AI Teaching Assistant",
         "description": "AI-powered features - lesson plans, question generation, doubt solver",
+    },
+    {
+        "name": "AI Question Generator",
+        "description": "Generate MCQ and subjective questions from syllabus topics using AI",
+    },
+    {
+        "name": "AI OCR Engine",
+        "description": "OCR processing for exam answer sheets and marks registers",
     },
     {
         "name": "Billing",
