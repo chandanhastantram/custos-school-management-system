@@ -23,6 +23,9 @@ from app.academics.routers.teaching_assignments import router as teaching_assign
 from app.scheduling.routers.timetable import router as timetable_router
 from app.scheduling.routers.schedule import router as schedule_router
 
+# Learning
+from app.learning.routers.daily_loops import router as daily_loops_router
+
 # AI
 from app.ai.router import router as ai_router
 
@@ -71,6 +74,9 @@ router.include_router(timetable_router, prefix="/scheduling/timetables")
 
 # Scheduling (Schedule Orchestration)
 router.include_router(schedule_router, prefix="/scheduling")
+
+# Learning (Daily Loops)
+router.include_router(daily_loops_router, prefix="/loops")
 
 # AI Features
 router.include_router(ai_router, prefix="/ai")

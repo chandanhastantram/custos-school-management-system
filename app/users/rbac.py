@@ -132,6 +132,11 @@ class Permission(str, Enum):
     
     # Gamification
     GAMIFICATION_MANAGE = "gamification:manage"
+    
+    # Daily Learning Loops
+    DAILY_LOOP_VIEW = "daily_loop:view"
+    DAILY_LOOP_START = "daily_loop:start"
+    DAILY_LOOP_ATTEMPT = "daily_loop:attempt"
 
 
 # Role-Permission mapping
@@ -181,6 +186,8 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.SCHEDULE_VIEW,
         Permission.SCHEDULE_GENERATE,
         Permission.SCHEDULE_UPDATE,
+        Permission.DAILY_LOOP_VIEW,
+        Permission.DAILY_LOOP_START,
     },
     
     SystemRole.SUB_ADMIN: {
@@ -234,6 +241,8 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.SCHEDULE_VIEW,
         Permission.SCHEDULE_GENERATE,
         Permission.SCHEDULE_UPDATE,
+        Permission.DAILY_LOOP_VIEW,
+        Permission.DAILY_LOOP_START,
     },
     
     SystemRole.STUDENT: {
@@ -251,6 +260,8 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.TIMETABLE_VIEW,
         Permission.POST_VIEW,
         Permission.SCHEDULE_VIEW,
+        Permission.DAILY_LOOP_VIEW,
+        Permission.DAILY_LOOP_ATTEMPT,
     },
     
     SystemRole.PARENT: {
