@@ -135,6 +135,13 @@ class Permission(str, Enum):
     # Gamification
     GAMIFICATION_MANAGE = "gamification:manage"
     
+    # Fees & Finance
+    FEE_VIEW = "fee:view"
+    FEE_COMPONENT_MANAGE = "fee:component_manage"
+    FEE_STRUCTURE_MANAGE = "fee:structure_manage"
+    FEE_INVOICE_GENERATE = "fee:invoice_generate"
+    FEE_PAYMENT_RECORD = "fee:payment_record"
+    
     # Daily Learning Loops
     DAILY_LOOP_VIEW = "daily_loop:view"
     DAILY_LOOP_START = "daily_loop:start"

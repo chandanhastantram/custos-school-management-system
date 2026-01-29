@@ -36,6 +36,9 @@ from app.ai.question_gen_router import router as question_gen_router
 # Billing
 from app.billing.router import router as billing_router
 
+# Finance (Fees)
+from app.finance.router import router as finance_router
+
 # Platform Features
 from app.platform.notifications.router import router as notifications_router
 from app.platform.files.router import router as files_router
@@ -111,6 +114,9 @@ router.include_router(gamification_router, prefix="/gamification")
 
 # Reports
 router.include_router(reports_router, prefix="/reports")
+
+# Finance (Fees)
+router.include_router(finance_router, prefix="/finance")
 
 # Platform Admin (non-tenant-scoped)
 router.include_router(platform_admin_router)
