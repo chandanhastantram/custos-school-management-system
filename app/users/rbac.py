@@ -143,6 +143,13 @@ class Permission(str, Enum):
     WEEKLY_TEST_CREATE = "weekly_test:create"
     WEEKLY_TEST_GENERATE = "weekly_test:generate"
     WEEKLY_TEST_SUBMIT_RESULT = "weekly_test:submit_result"
+    
+    # Lesson Evaluation & Adaptive
+    LESSON_TEST_VIEW = "lesson_test:view"
+    LESSON_TEST_CREATE = "lesson_test:create"
+    LESSON_TEST_GENERATE = "lesson_test:generate"
+    LESSON_TEST_SUBMIT_RESULT = "lesson_test:submit_result"
+    ADAPTIVE_VIEW = "adaptive:view"
 
 
 # Role-Permission mapping
@@ -198,6 +205,11 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.WEEKLY_TEST_CREATE,
         Permission.WEEKLY_TEST_GENERATE,
         Permission.WEEKLY_TEST_SUBMIT_RESULT,
+        Permission.LESSON_TEST_VIEW,
+        Permission.LESSON_TEST_CREATE,
+        Permission.LESSON_TEST_GENERATE,
+        Permission.LESSON_TEST_SUBMIT_RESULT,
+        Permission.ADAPTIVE_VIEW,
     },
     
     SystemRole.SUB_ADMIN: {
@@ -257,6 +269,11 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.WEEKLY_TEST_CREATE,
         Permission.WEEKLY_TEST_GENERATE,
         Permission.WEEKLY_TEST_SUBMIT_RESULT,
+        Permission.LESSON_TEST_VIEW,
+        Permission.LESSON_TEST_CREATE,
+        Permission.LESSON_TEST_GENERATE,
+        Permission.LESSON_TEST_SUBMIT_RESULT,
+        Permission.ADAPTIVE_VIEW,
     },
     
     SystemRole.STUDENT: {
@@ -277,6 +294,8 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.DAILY_LOOP_VIEW,
         Permission.DAILY_LOOP_ATTEMPT,
         Permission.WEEKLY_TEST_VIEW,
+        Permission.LESSON_TEST_VIEW,
+        Permission.ADAPTIVE_VIEW,
     },
     
     SystemRole.PARENT: {

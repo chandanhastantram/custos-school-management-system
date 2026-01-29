@@ -15,6 +15,16 @@ from app.learning.models.weekly_tests import (
     WeeklyTestStatus,
     QuestionStrengthType,
 )
+from app.learning.models.lesson_evaluation import (
+    LessonEvaluation,
+    LessonEvaluationQuestion,
+    LessonEvaluationResult,
+    LessonMasterySnapshot,
+    AdaptiveRecommendation,
+    LessonEvaluationStatus,
+    RecommendationType,
+    RecommendationPriority,
+)
 
 __all__ = [
     # Daily Loops
@@ -28,4 +38,13 @@ __all__ = [
     "WeeklyStudentPerformance",
     "WeeklyTestStatus",
     "QuestionStrengthType",
+    # Lesson Evaluation
+    "LessonEvaluation",
+    "LessonEvaluationQuestion",
+    "LessonEvaluationResult",
+    "LessonMasterySnapshot",
+    "AdaptiveRecommendation",
+    "LessonEvaluationStatus",
+    "RecommendationType",
+    "RecommendationPriority",
 ]

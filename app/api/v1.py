@@ -26,6 +26,7 @@ from app.scheduling.routers.schedule import router as schedule_router
 # Learning
 from app.learning.routers.daily_loops import router as daily_loops_router
 from app.learning.routers.weekly_tests import router as weekly_tests_router
+from app.learning.routers.lesson_evaluation import router as lesson_evaluation_router
 
 # AI
 from app.ai.router import router as ai_router
@@ -81,6 +82,9 @@ router.include_router(daily_loops_router, prefix="/loops")
 
 # Learning (Weekly Evaluation)
 router.include_router(weekly_tests_router, prefix="/loops/weekly")
+
+# Learning (Lesson Evaluation & Adaptive)
+router.include_router(lesson_evaluation_router, prefix="/loops/lesson")
 
 # AI Features
 router.include_router(ai_router, prefix="/ai")
