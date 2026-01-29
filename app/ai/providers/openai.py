@@ -151,3 +151,101 @@ Provide:
         }
         
         return await self.generate_structured(prompt, schema)
+    
+    async def process_exam_ocr(
+        self,
+        image_base64: str,
+        image_type: str = "image/jpeg",
+        exam_context: Optional[str] = None,
+    ) -> dict:
+        """
+        Process exam answer sheet using GPT-4 Vision.
+        
+        Extracts:
+        - Student identifiers (name/roll number)
+        - Total marks
+        - Marks obtained
+        - Wrong question numbers
+        """
+        context_text = f"\n{exam_context}" if exam_context else ""
+        
+        prompt = f"""Analyze this exam answer sheet or marks register image.{context_text}
+
+Extract the following information for each student visible:
+1. Student identifier (name or roll number)
+2. Total marks possible
+3. Marks obtained
+4. List of attempted question numbers (if visible)
+5. List of wrong question numbers (questions marked wrong or with deductions)
+
+Be precise with numbers. If you cannot read something clearly, indicate low confidence."""
+
+        schema = {
+            "success": "boolean",
+            "exam_title": "title if visible, else null",
+            "total_students": "number of students extracted",
+            "students": [
+                {
+                    "student_identifier": "name or roll number",
+                    "total_marks": "number",
+                    "marks_obtained": "number",
+                    "attempted_questions": ["list of integers"],
+                    "wrong_questions": ["list of integers"],
+                    "confidence": "0.0 to 1.0"
+                }
+            ],
+            "errors": ["any issues encountered"]
+        }
+        
+        system_prompt = f"""You are an expert OCR system specialized in reading exam answer sheets and mark registers.
+You must extract student results accurately.
+Your response must match this schema: {json.dumps(schema)}
+Respond with ONLY valid JSON, no other text."""
+
+        # Use vision model
+        vision_model = getattr(settings, 'openai_vision_model', 'gpt-4o')
+        
+        response = await self.client.chat.completions.create(
+            model=vision_model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{image_type};base64,{image_base64}",
+                                "detail": "high"
+                            }
+                        }
+                    ]
+                }
+            ],
+            max_tokens=settings.openai_max_tokens,
+            temperature=0.2,  # Low temperature for accuracy
+        )
+        
+        content = response.choices[0].message.content
+        
+        # Parse JSON from response
+        try:
+            # Try to extract JSON from response
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            
+            return json.loads(content.strip())
+        except json.JSONDecodeError:
+            return {
+                "success": False,
+                "exam_title": None,
+                "total_students": 0,
+                "students": [],
+                "errors": ["Failed to parse OCR response as JSON"]
+            }
+

@@ -95,6 +95,7 @@ class Permission(str, Enum):
     AI_QUESTION_GEN = "ai:question_gen"
     AI_DOUBT_SOLVER = "ai:doubt_solver"
     AI_LESSON_PLAN_GENERATE = "ai:lesson_plan_generate"
+    AI_OCR_PROCESS = "ai:ocr_process"
     
     # Reports
     REPORT_VIEW_OWN = "report:view_own"
@@ -212,6 +213,7 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.LESSON_TEST_SUBMIT_RESULT,
         Permission.ADAPTIVE_VIEW,
         Permission.AI_LESSON_PLAN_GENERATE,
+        Permission.AI_OCR_PROCESS,
     },
     
     SystemRole.SUB_ADMIN: {
@@ -277,6 +279,7 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.LESSON_TEST_SUBMIT_RESULT,
         Permission.ADAPTIVE_VIEW,
         Permission.AI_LESSON_PLAN_GENERATE,
+        Permission.AI_OCR_PROCESS,
     },
     
     SystemRole.STUDENT: {
