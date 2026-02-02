@@ -50,6 +50,11 @@ class StudentAttendance(TenantBaseModel):
     Daily student attendance record.
     
     One record per student per day.
+    
+    IMPORTANT: participation_status determines academic impact:
+    - PARTICIPATED: Normal academic evaluation
+    - EXCUSED_ABSENT: NOT counted against student (medical, approved)
+    - UNEXCUSED_ABSENT: Counts as zero for academics
     """
     __tablename__ = "student_attendance"
     
@@ -85,10 +90,34 @@ class StudentAttendance(TenantBaseModel):
     # Date
     attendance_date: Mapped[date] = mapped_column(Date, nullable=False)
     
-    # Status
+    # Status (legacy field - for display)
     status: Mapped[AttendanceStatus] = mapped_column(
         SQLEnum(AttendanceStatus),
         default=AttendanceStatus.NOT_MARKED,
+    )
+    
+    # Participation status (NEW - for academic fairness)
+    # Derived from status but explicit for mastery calculations
+    participation_status: Mapped[str] = mapped_column(
+        String(20),
+        default="participated",
+        nullable=False,
+    )
+    
+    # Absence reason (when not participated)
+    absence_reason: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+    absence_reason_detail: Mapped[Optional[str]] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+    
+    # Reference document (leave application ID, medical certificate)
+    reference_document_id: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
     )
     
     # Time tracking (optional)
@@ -152,8 +181,14 @@ class AttendanceSummary(TenantBaseModel):
     half_days: Mapped[int] = mapped_column(default=0)
     excused_days: Mapped[int] = mapped_column(default=0)
     
+    # New: Explicit tracking for academic fairness
+    unexcused_days: Mapped[int] = mapped_column(default=0)
+    
     # Percentage
     attendance_percentage: Mapped[float] = mapped_column(default=0.0)
+    
+    # Participation rate (excludes excused absences from denominator)
+    participation_rate: Mapped[float] = mapped_column(default=0.0)
     
     # Last calculated
     calculated_at: Mapped[Optional[datetime]] = mapped_column(

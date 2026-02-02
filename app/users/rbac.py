@@ -37,6 +37,7 @@ class Permission(str, Enum):
     STUDENT_CREATE = "student:create"
     STUDENT_UPDATE = "student:update"
     STUDENT_DELETE = "student:delete"
+    STUDENT_LIFECYCLE_MANAGE = "student:lifecycle_manage"  # Lifecycle state transitions
     
     # Teachers
     TEACHER_VIEW = "teacher:view"
@@ -207,6 +208,12 @@ class Permission(str, Enum):
     # AI Insights (NO access for Students/Parents)
     INSIGHTS_REQUEST = "insights:request"
     INSIGHTS_VIEW = "insights:view"
+    
+    # Corrections (Safe Reversal Framework)
+    CORRECTION_REQUEST = "correction:request"    # Request a correction
+    CORRECTION_APPROVE = "correction:approve"    # Approve/reject corrections
+    CORRECTION_VIEW = "correction:view"          # View correction history
+    CORRECTION_OVERRIDE = "correction:override"  # Override time locks
 
 
 # Role-Permission mapping
@@ -223,6 +230,7 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.STUDENT_VIEW,
         Permission.STUDENT_CREATE,
         Permission.STUDENT_UPDATE,
+        Permission.STUDENT_LIFECYCLE_MANAGE,
         Permission.TEACHER_VIEW,
         Permission.TEACHER_CREATE,
         Permission.TEACHER_UPDATE,
@@ -292,6 +300,11 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         # AI Insights
         Permission.INSIGHTS_REQUEST,
         Permission.INSIGHTS_VIEW,
+        # Corrections (Safe Reversal)
+        Permission.CORRECTION_REQUEST,
+        Permission.CORRECTION_APPROVE,
+        Permission.CORRECTION_VIEW,
+        Permission.CORRECTION_OVERRIDE,  # Principal can override time locks
     },
     
     SystemRole.SUB_ADMIN: {
@@ -300,6 +313,7 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.STUDENT_VIEW,
         Permission.STUDENT_CREATE,
         Permission.STUDENT_UPDATE,
+        Permission.STUDENT_LIFECYCLE_MANAGE,
         Permission.TEACHER_VIEW,
         Permission.CLASS_VIEW,
         Permission.SUBJECT_VIEW,
@@ -337,6 +351,10 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         # AI Insights
         Permission.INSIGHTS_REQUEST,
         Permission.INSIGHTS_VIEW,
+        # Corrections (Safe Reversal) - cannot override time locks
+        Permission.CORRECTION_REQUEST,
+        Permission.CORRECTION_APPROVE,
+        Permission.CORRECTION_VIEW,
     },
     
     SystemRole.TEACHER: {

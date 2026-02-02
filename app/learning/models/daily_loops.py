@@ -151,6 +151,8 @@ class StudentTopicMastery(TenantBaseModel):
     - Strong/weak question identification
     - Adaptive question selection
     - Progress reporting
+    
+    FAIR MASTERY: excused absences are excluded from denominator.
     """
     __tablename__ = "student_topic_mastery"
     
@@ -174,11 +176,18 @@ class StudentTopicMastery(TenantBaseModel):
         nullable=False,
     )
     
-    # Aggregated stats
+    # Aggregated stats (only counts participated events)
     total_attempts: Mapped[int] = mapped_column(Integer, default=0)
     correct_attempts: Mapped[int] = mapped_column(Integer, default=0)
     
+    # Participation tracking (NEW - for academic fairness)
+    total_sessions: Mapped[int] = mapped_column(Integer, default=0)  # Total sessions scheduled
+    participated_sessions: Mapped[int] = mapped_column(Integer, default=0)  # Actually participated
+    excused_absence_count: Mapped[int] = mapped_column(Integer, default=0)  # Excused absences
+    unexcused_absence_count: Mapped[int] = mapped_column(Integer, default=0)  # Unexcused absences
+    
     # Computed mastery percentage (0.0 to 100.0)
+    # Only from PARTICIPATED sessions (excused excluded from denominator)
     mastery_percent: Mapped[float] = mapped_column(Float, default=0.0)
     
     # Streak tracking (optional)

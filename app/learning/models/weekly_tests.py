@@ -179,6 +179,11 @@ class WeeklyTestResult(TenantBaseModel):
     Weekly Test Result - Individual student's result.
     
     Submitted manually by teacher after offline evaluation.
+    
+    IMPORTANT: participation_status determines mastery impact:
+    - PARTICIPATED: Normal evaluation
+    - EXCUSED_ABSENT: marks=NULL, NOT counted against student
+    - UNEXCUSED_ABSENT: marks=0, counts as zero
     """
     __tablename__ = "weekly_test_results"
     
@@ -199,9 +204,22 @@ class WeeklyTestResult(TenantBaseModel):
         nullable=False,
     )
     
-    # Marks
+    # Participation status (NEW - for academic fairness)
+    participation_status: Mapped[str] = mapped_column(
+        String(20),
+        default="participated",
+        nullable=False,
+    )
+    
+    # Absence reason (when not participated)
+    absence_reason: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+    
+    # Marks (NULL if excused absent, 0 if unexcused absent)
     total_marks: Mapped[float] = mapped_column(Float, nullable=False)
-    marks_obtained: Mapped[float] = mapped_column(Float, nullable=False)
+    marks_obtained: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     
     # Which questions were attempted (by question_number)
     attempted_questions: Mapped[List[int]] = mapped_column(
@@ -217,8 +235,8 @@ class WeeklyTestResult(TenantBaseModel):
         nullable=False,
     )
     
-    # Computed
-    percentage: Mapped[float] = mapped_column(Float, default=0.0)
+    # Computed (NULL if not participated)
+    percentage: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     
     # Submitted by
     submitted_by: Mapped[Optional[UUID]] = mapped_column(

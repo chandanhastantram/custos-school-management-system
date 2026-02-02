@@ -94,6 +94,7 @@ class StudentAnalyticsSnapshot(TenantBaseModel):
     # ACTIVITY SCORE (VISIBLE TO STUDENTS)
     # ------------------------------------------
     # Measures participation, NOT correctness
+    # NOTE: Only penalized by UNEXCUSED absences (excused excluded from denominator)
     activity_score: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=0)
     
     # Activity breakdown
@@ -106,6 +107,7 @@ class StudentAnalyticsSnapshot(TenantBaseModel):
     # ACTUAL PERFORMANCE SCORE (HIDDEN FROM STUDENTS)
     # ------------------------------------------
     # Measures mastery and correctness
+    # NOTE: Excused absences excluded from denominator - fair mastery
     actual_score: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=0)
     
     # Performance breakdown
@@ -127,6 +129,13 @@ class StudentAnalyticsSnapshot(TenantBaseModel):
     # Attendance raw
     school_days_total: Mapped[int] = mapped_column(Integer, default=0)
     school_days_present: Mapped[int] = mapped_column(Integer, default=0)
+    
+    # NEW: Absence tracking for academic fairness
+    excused_absence_count: Mapped[int] = mapped_column(Integer, default=0)
+    unexcused_absence_count: Mapped[int] = mapped_column(Integer, default=0)
+    
+    # Participation rate (excludes excused from denominator)
+    participation_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=0)
     
     # Topics/concepts analysis (NOT for comparison)
     weak_concepts_json: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)

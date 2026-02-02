@@ -164,6 +164,18 @@ class StudentProfile(TenantBaseModel):
     emergency_contact: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     medical_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
+    # Lifecycle state (cached from events - source of truth is student_lifecycle_events)
+    current_lifecycle_state: Mapped[str] = mapped_column(
+        String(20),
+        default="active",
+        nullable=False,
+        index=True,
+    )
+    current_state_effective_date: Mapped[Optional[date]] = mapped_column(
+        Date,
+        nullable=True,
+    )
+    
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="student_profile")
 
