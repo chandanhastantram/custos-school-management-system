@@ -19,9 +19,15 @@ from app.platform.admin.dependencies import (
 from app.tenants.models import Tenant, TenantStatus
 from app.billing.models import Plan, Subscription
 from app.users.models import User
+from app.platform.observability.router import router as observability_router
+from app.platform.control.router import router as control_router
 
 
 router = APIRouter(prefix="/platform", tags=["Platform Admin"])
+
+# Include sub-routers
+router.include_router(observability_router)
+router.include_router(control_router)
 
 
 @router.get("/stats")

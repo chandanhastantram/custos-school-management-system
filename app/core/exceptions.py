@@ -130,3 +130,27 @@ class RateLimitError(CustosException):
             status_code=429,
             details={"retry_after": retry_after},
         )
+
+
+class PaymentError(CustosException):
+    """Payment processing error."""
+    
+    def __init__(self, message: str, details: Optional[dict] = None):
+        super().__init__(
+            message=message,
+            code="PAYMENT_ERROR",
+            status_code=400,
+            details=details,
+        )
+
+
+class PermissionDeniedError(CustosException):
+    """Permission denied error."""
+    
+    def __init__(self, message: str = "Permission denied", details: Optional[dict] = None):
+        super().__init__(
+            message=message,
+            code="PERMISSION_DENIED",
+            status_code=403,
+            details=details,
+        )

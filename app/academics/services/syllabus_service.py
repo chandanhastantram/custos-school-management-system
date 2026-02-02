@@ -21,6 +21,9 @@ from app.academics.schemas.syllabus import (
     TopicCreate, TopicUpdate, BulkTopicCreate,
     TopicWeightageCreate, TopicWeightageUpdate,
 )
+from app.core.cache import (
+    get_cache, CacheKeys, CacheTTL, invalidate_cache, CacheEvent,
+)
 
 
 class SyllabusService:
@@ -42,12 +45,15 @@ class SyllabusService:
         self.repo = SyllabusRepository(session, tenant_id)
     
     # ========================================
-    # Board Operations
+    # Board Operations (with cache invalidation)
     # ========================================
     
     async def create_board(self, data: BoardCreate) -> Board:
         """Create a new board."""
-        return await self.repo.create_board(**data.model_dump())
+        board = await self.repo.create_board(**data.model_dump())
+        # Invalidate cache
+        await invalidate_cache(CacheEvent.SYLLABUS_CREATED, self.tenant_id, entity_id=board.id)
+        return board
     
     async def get_board(self, board_id: UUID, include_levels: bool = False) -> Board:
         """Get board by ID."""
@@ -67,11 +73,16 @@ class SyllabusService:
     async def update_board(self, board_id: UUID, data: BoardUpdate) -> Board:
         """Update a board."""
         update_data = data.model_dump(exclude_unset=True)
-        return await self.repo.update_board(board_id, **update_data)
+        board = await self.repo.update_board(board_id, **update_data)
+        # Invalidate cache
+        await invalidate_cache(CacheEvent.SYLLABUS_UPDATED, self.tenant_id, entity_id=board_id)
+        return board
     
     async def delete_board(self, board_id: UUID) -> None:
         """Delete a board."""
         await self.repo.delete_board(board_id)
+        # Invalidate cache
+        await invalidate_cache(CacheEvent.SYLLABUS_DELETED, self.tenant_id, entity_id=board_id)
     
     # ========================================
     # ClassLevel Operations
@@ -247,7 +258,7 @@ class SyllabusService:
         await self.repo.delete_weightage(weightage_id)
     
     # ========================================
-    # Full Syllabus View
+    # Full Syllabus View (CACHED - 24h TTL)
     # ========================================
     
     async def get_full_syllabus(self, board_id: UUID) -> dict:
@@ -256,11 +267,25 @@ class SyllabusService:
         
         Returns hierarchical structure:
         Board → ClassLevels → Subjects → Chapters → Topics
+        
+        CACHED: 24 hours TTL
+        Invalidated on: syllabus create/update/delete
         """
+        # Try cache first
+        cache = await get_cache()
+        cache_key = CacheKeys.syllabus_tree(self.tenant_id, board_id)
+        
+        cached_data = await cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        
+        # Cache miss - fetch from DB
         board = await self.repo.get_board_with_levels(board_id)
         
         result = {
-            "board": board,
+            "board_id": str(board.id),
+            "board_name": board.name,
+            "board_code": board.code,
             "class_levels": [],
         }
         
@@ -270,7 +295,9 @@ class SyllabusService:
             
             level_with_subjects = await self.repo.get_class_level_with_subjects(level.id)
             level_data = {
-                "level": level_with_subjects,
+                "level_id": str(level_with_subjects.id),
+                "level_name": level_with_subjects.name,
+                "order": level_with_subjects.order,
                 "subjects": [],
             }
             
@@ -279,9 +306,45 @@ class SyllabusService:
                     continue
                 
                 subject_with_chapters = await self.repo.get_subject_with_chapters(subject.id)
-                level_data["subjects"].append(subject_with_chapters)
+                subject_data = {
+                    "subject_id": str(subject_with_chapters.id),
+                    "subject_name": subject_with_chapters.name,
+                    "code": subject_with_chapters.code,
+                    "category": subject_with_chapters.category,
+                    "total_hours": subject_with_chapters.total_hours,
+                    "chapters": [],
+                }
+                
+                for chapter in subject_with_chapters.chapters:
+                    if chapter.is_deleted:
+                        continue
+                    
+                    chapter_data = {
+                        "chapter_id": str(chapter.id),
+                        "chapter_name": chapter.name,
+                        "order": chapter.order,
+                        "estimated_hours": chapter.estimated_hours,
+                        "topics": [],
+                    }
+                    
+                    # Get topics for chapter
+                    topics = await self.repo.list_topics(chapter.id, is_active=True)
+                    for topic in topics:
+                        chapter_data["topics"].append({
+                            "topic_id": str(topic.id),
+                            "topic_name": topic.name,
+                            "order": topic.order,
+                            "estimated_minutes": topic.estimated_minutes,
+                        })
+                    
+                    subject_data["chapters"].append(chapter_data)
+                
+                level_data["subjects"].append(subject_data)
             
             result["class_levels"].append(level_data)
+        
+        # Cache the result (24 hours)
+        await cache.set(cache_key, result, CacheTTL.SYLLABUS)
         
         return result
     

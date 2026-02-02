@@ -159,6 +159,54 @@ class Permission(str, Enum):
     LESSON_TEST_GENERATE = "lesson_test:generate"
     LESSON_TEST_SUBMIT_RESULT = "lesson_test:submit_result"
     ADAPTIVE_VIEW = "adaptive:view"
+    
+    # Attendance
+    ATTENDANCE_VIEW = "attendance:view"
+    ATTENDANCE_MARK = "attendance:mark"
+    ATTENDANCE_REPORT = "attendance:report"
+    LEAVE_REQUEST_VIEW = "leave_request:view"
+    LEAVE_REQUEST_APPROVE = "leave_request:approve"
+    
+    # Announcements
+    ANNOUNCEMENT_VIEW = "announcement:view"
+    ANNOUNCEMENT_MANAGE = "announcement:manage"
+    
+    # Payments
+    PAYMENT_VIEW = "payment:view"
+    PAYMENT_CREATE = "payment:create"
+    PAYMENT_REFUND = "payment:refund"
+    PAYMENT_GATEWAY_MANAGE = "payment:gateway_manage"
+    
+    # Transport
+    TRANSPORT_VIEW = "transport:view"
+    TRANSPORT_MANAGE = "transport:manage"
+    TRANSPORT_ASSIGN = "transport:assign"
+    
+    # Hostel
+    HOSTEL_VIEW = "hostel:view"
+    HOSTEL_MANAGE = "hostel:manage"
+    HOSTEL_ASSIGN = "hostel:assign"
+    
+    # HR & Payroll
+    HR_MANAGE = "hr:manage"
+    PAYROLL_RUN = "payroll:run"
+    PAYROLL_VIEW = "payroll:view"
+    LEAVE_APPROVE = "leave:approve"
+    LEAVE_APPLY = "leave:apply"
+    
+    # Analytics
+    ANALYTICS_VIEW_ADMIN = "analytics:view_admin"
+    ANALYTICS_VIEW_TEACHER = "analytics:view_teacher"
+    ANALYTICS_VIEW_STUDENT = "analytics:view_student"
+    
+    # Governance & Compliance
+    AUDIT_VIEW = "audit:view"
+    AUDIT_EXPORT = "audit:export"
+    CONSENT_MANAGE = "consent:manage"
+    
+    # AI Insights (NO access for Students/Parents)
+    INSIGHTS_REQUEST = "insights:request"
+    INSIGHTS_VIEW = "insights:view"
 
 
 # Role-Permission mapping
@@ -221,6 +269,29 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.ADAPTIVE_VIEW,
         Permission.AI_LESSON_PLAN_GENERATE,
         Permission.AI_OCR_PROCESS,
+        # Transport
+        Permission.TRANSPORT_VIEW,
+        Permission.TRANSPORT_MANAGE,
+        Permission.TRANSPORT_ASSIGN,
+        # Hostel
+        Permission.HOSTEL_VIEW,
+        Permission.HOSTEL_MANAGE,
+        Permission.HOSTEL_ASSIGN,
+        # HR & Payroll
+        Permission.HR_MANAGE,
+        Permission.PAYROLL_RUN,
+        Permission.PAYROLL_VIEW,
+        Permission.LEAVE_APPROVE,
+        Permission.LEAVE_APPLY,
+        # Analytics
+        Permission.ANALYTICS_VIEW_ADMIN,
+        # Governance & Compliance
+        Permission.AUDIT_VIEW,
+        Permission.AUDIT_EXPORT,
+        Permission.CONSENT_MANAGE,
+        # AI Insights
+        Permission.INSIGHTS_REQUEST,
+        Permission.INSIGHTS_VIEW,
     },
     
     SystemRole.SUB_ADMIN: {
@@ -243,6 +314,29 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.TEACHING_ASSIGNMENT_DELETE,
         Permission.SCHEDULE_VIEW,
         Permission.SCHEDULE_GENERATE,
+        # Transport
+        Permission.TRANSPORT_VIEW,
+        Permission.TRANSPORT_MANAGE,
+        Permission.TRANSPORT_ASSIGN,
+        # Hostel
+        Permission.HOSTEL_VIEW,
+        Permission.HOSTEL_MANAGE,
+        Permission.HOSTEL_ASSIGN,
+        # HR & Payroll
+        Permission.HR_MANAGE,
+        Permission.PAYROLL_RUN,
+        Permission.PAYROLL_VIEW,
+        Permission.LEAVE_APPROVE,
+        Permission.LEAVE_APPLY,
+        # Analytics
+        Permission.ANALYTICS_VIEW_ADMIN,
+        # Governance & Compliance
+        Permission.AUDIT_VIEW,
+        Permission.AUDIT_EXPORT,
+        Permission.CONSENT_MANAGE,
+        # AI Insights
+        Permission.INSIGHTS_REQUEST,
+        Permission.INSIGHTS_VIEW,
     },
     
     SystemRole.TEACHER: {
@@ -287,6 +381,14 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.ADAPTIVE_VIEW,
         Permission.AI_LESSON_PLAN_GENERATE,
         Permission.AI_OCR_PROCESS,
+        # HR Self-Service
+        Permission.PAYROLL_VIEW,
+        Permission.LEAVE_APPLY,
+        # Analytics (class-level only)
+        Permission.ANALYTICS_VIEW_TEACHER,
+        # AI Insights (own classes/self only, enforced in service)
+        Permission.INSIGHTS_REQUEST,
+        Permission.INSIGHTS_VIEW,
     },
     
     SystemRole.STUDENT: {
@@ -309,6 +411,12 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.WEEKLY_TEST_VIEW,
         Permission.LESSON_TEST_VIEW,
         Permission.ADAPTIVE_VIEW,
+        # Transport
+        Permission.TRANSPORT_VIEW,
+        # Hostel
+        Permission.HOSTEL_VIEW,
+        # Analytics (activity score only)
+        Permission.ANALYTICS_VIEW_STUDENT,
     },
     
     SystemRole.PARENT: {
@@ -318,6 +426,12 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.REPORT_VIEW_OWN,
         Permission.CALENDAR_VIEW,
         Permission.POST_VIEW,
+        # Transport
+        Permission.TRANSPORT_VIEW,
+        # Hostel
+        Permission.HOSTEL_VIEW,
+        # Analytics (child's activity score only)
+        Permission.ANALYTICS_VIEW_STUDENT,
     },
 }
 

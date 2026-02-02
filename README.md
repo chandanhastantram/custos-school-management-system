@@ -70,6 +70,96 @@ CUSTOS is a comprehensive, AI-powered school management SaaS platform designed f
 - Usage limits enforcement
 - Trial periods
 
+### 💰 Payment Gateway
+- Razorpay integration
+- Secure payment processing
+- Refunds and reconciliation
+- Webhook handling
+- Receipt generation
+
+### 👨‍👩‍👧‍👦 Parent Portal
+- Multi-child dashboard
+- Academic progress tracking
+- Fee payment & history
+- Attendance monitoring
+- Leave request submission
+- School announcements
+
+### 📅 Attendance Management
+- Student attendance marking
+- Teacher attendance tracking
+- Leave request workflow
+- Monthly summaries
+- Attendance reports
+
+### 📆 School Calendar
+- Events & holidays management
+- Academic calendar
+- Class/section specific events
+- Recurring events
+
+### 🚌 Transport Management
+- Vehicle fleet management
+- Driver records & license tracking
+- Route & stop definitions
+- Student transport assignments
+- Capacity tracking
+- Parent pickup/drop visibility
+- Transport fee linking
+
+### 🏠 Hostel Management
+- Hostel & building management
+- Room & bed allocation
+- Warden assignment
+- Student check-in/check-out
+- Bed occupancy tracking
+- Parent hostel visibility
+- Hostel fee linking
+
+### 💼 HR & Payroll
+- Employee records (teaching & non-teaching)
+- Departments & designations
+- Salary components & structures
+- Employment contracts
+- Monthly payroll processing
+- Salary slips generation
+- Leave types & quotas
+- Leave balance tracking
+- Leave application & approval workflow
+
+### 📊 Analytics & Performance Intelligence
+- Activity Score (participation tracking - student visible)
+- Actual Performance Score (mastery - teacher/admin only)
+- Student analytics snapshots
+- Teacher performance metrics
+- Class-level aggregate insights
+- Personal progress summaries
+- Principal dashboard overview
+- NO rankings or leaderboards
+- Strict role-based visibility
+
+### 🔒 Governance & Compliance
+- Immutable audit logs (append-only)
+- Data access tracking
+- Consent management (GDPR/child protection)
+- Inspection-ready exports
+- Reference number tracking
+- Admin/Principal-only access
+- Enterprise-grade compliance
+
+### 🤖 AI Insights & Decision Support
+- Explainable AI - explains patterns, never judges
+- Student insights (teachers only)
+- Class-level insights
+- Teacher self-improvement insights
+- School-wide pattern analysis (admin only)
+- Data anonymization before AI processing
+- NO student comparisons or rankings
+- NO automated decisions
+- Quota-controlled AI usage
+- Governance-first approach
+
+
 ## 🛠️ Tech Stack
 
 - **Backend**: FastAPI (Python 3.11+)

@@ -88,6 +88,20 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             response.headers["X-Request-ID"] = request_id
             response.headers["X-Response-Time"] = f"{duration_ms:.2f}ms"
             
+            # Record metrics for observability
+            if tenant_id:
+                try:
+                    from uuid import UUID as UUIDType
+                    from app.platform.observability.metrics import record_request
+                    record_request(
+                        tenant_id=UUIDType(str(tenant_id)),
+                        endpoint=request.url.path,
+                        response_time_ms=duration_ms,
+                        is_error=response.status_code >= 400,
+                    )
+                except Exception:
+                    pass  # Never fail request due to metrics
+            
             # Log request completion
             log_level = logging.WARNING if response.status_code >= 400 else logging.INFO
             logger.log(

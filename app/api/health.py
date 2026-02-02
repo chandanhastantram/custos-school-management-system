@@ -59,3 +59,74 @@ async def readiness_check(db: AsyncSession = Depends(get_db)):
         "ready": is_ready,
         "checks": checks,
     }
+
+
+@router.get("/health/resilience")
+async def resilience_health():
+    """
+    Get resilience status including circuit breakers.
+    
+    Shows which features are degraded/unavailable.
+    """
+    from app.core.resilience import get_resilience_health, get_all_circuit_status
+    
+    return {
+        "summary": get_resilience_health(),
+        "circuits": get_all_circuit_status(),
+    }
+
+
+@router.get("/health/detailed")
+async def detailed_health(db: AsyncSession = Depends(get_db)):
+    """
+    Detailed health check including:
+    - Database connection
+    - Cache status
+    - Circuit breaker status
+    """
+    from app.core.resilience import get_resilience_health
+    from app.core.cache import get_cache
+    
+    health = {
+        "status": "healthy",
+        "checks": {},
+    }
+    
+    # Database check
+    try:
+        await db.execute(text("SELECT 1"))
+        health["checks"]["database"] = {"status": "healthy"}
+    except Exception as e:
+        health["checks"]["database"] = {
+            "status": "unhealthy",
+            "error": str(e)[:100],
+        }
+        health["status"] = "degraded"
+    
+    # Cache check
+    try:
+        cache = await get_cache()
+        cache_health = await cache.health_check()
+        health["checks"]["cache"] = cache_health
+        if cache_health.get("status") not in ("healthy", "unavailable"):
+            health["status"] = "degraded"
+    except Exception as e:
+        health["checks"]["cache"] = {
+            "status": "error",
+            "error": str(e)[:100],
+        }
+    
+    # Resilience check
+    try:
+        resilience = get_resilience_health()
+        health["checks"]["resilience"] = resilience
+        if resilience.get("status") != "healthy":
+            health["status"] = "degraded"
+    except Exception as e:
+        health["checks"]["resilience"] = {
+            "status": "error",
+            "error": str(e)[:100],
+        }
+    
+    return health
+

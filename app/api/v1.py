@@ -39,6 +39,39 @@ from app.billing.router import router as billing_router
 # Finance (Fees)
 from app.finance.router import router as finance_router
 
+# Payments (Gateway)
+from app.payments.router import router as payments_router
+
+# Parent Portal
+from app.parents.router import router as parents_router
+
+# Announcements
+from app.announcements.router import router as announcements_router
+
+# Attendance
+from app.attendance.router import router as attendance_router
+
+# Calendar
+from app.calendar.router import router as calendar_router
+
+# Transport
+from app.transport.router import router as transport_router
+
+# Hostel
+from app.hostel.router import router as hostel_router
+
+# HR & Payroll
+from app.hr.router import router as hr_router
+
+# Analytics
+from app.analytics.router import router as analytics_router
+
+# Governance
+from app.governance.router import router as governance_router
+
+# AI Insights
+from app.insights.router import router as insights_router
+
 # Platform Features
 from app.platform.notifications.router import router as notifications_router
 from app.platform.files.router import router as files_router
@@ -117,6 +150,39 @@ router.include_router(reports_router, prefix="/reports")
 
 # Finance (Fees)
 router.include_router(finance_router, prefix="/finance")
+
+# Payments (Gateway Integration)
+router.include_router(payments_router, prefix="/payments")
+
+# Parent Portal
+router.include_router(parents_router, prefix="/parents")
+
+# Announcements
+router.include_router(announcements_router, prefix="/announcements")
+
+# Attendance
+router.include_router(attendance_router, prefix="/attendance")
+
+# Calendar
+router.include_router(calendar_router, prefix="/calendar")
+
+# Transport
+router.include_router(transport_router, prefix="/transport")
+
+# Hostel
+router.include_router(hostel_router, prefix="/hostel")
+
+# HR & Payroll
+router.include_router(hr_router, prefix="/hr")
+
+# Analytics
+router.include_router(analytics_router, prefix="/analytics")
+
+# Governance
+router.include_router(governance_router, prefix="/governance")
+
+# AI Insights
+router.include_router(insights_router, prefix="/insights")
 
 # Platform Admin (non-tenant-scoped)
 router.include_router(platform_admin_router)

@@ -33,6 +33,9 @@ from app.scheduling.schemas.schedule import (
     TeacherScheduleView,
     ScheduleStats,
 )
+from app.core.cache import (
+    get_cache, CacheKeys, CacheTTL, invalidate_cache, CacheEvent,
+)
 
 
 class ScheduleService:
@@ -379,7 +382,7 @@ class ScheduleService:
         await self.repo.delete_entry(entry_id)
     
     # ============================================
-    # Schedule Views
+    # Schedule Views (CACHED - 6h TTL)
     # ============================================
     
     async def get_class_schedule(
@@ -390,7 +393,25 @@ class ScheduleService:
         section_id: Optional[UUID] = None,
         max_periods: int = 8,
     ) -> ClassScheduleView:
-        """Get schedule view for a class."""
+        """
+        Get schedule view for a class.
+        
+        CACHED: 6 hours TTL (for weekly views)
+        Invalidated on: schedule/timetable changes
+        """
+        # Calculate week start for cache key (align to Monday)
+        week_start = start_date - timedelta(days=start_date.weekday())
+        
+        # Try cache first
+        cache = await get_cache()
+        cache_key = CacheKeys.timetable_class_week(self.tenant_id, class_id, week_start)
+        
+        cached_data = await cache.get(cache_key)
+        if cached_data is not None:
+            # Reconstruct ClassScheduleView from cached data
+            return ClassScheduleView(**cached_data)
+        
+        # Cache miss - fetch from DB
         entries = await self.repo.get_entries_by_class_date(
             class_id, start_date, end_date, section_id
         )
@@ -438,13 +459,18 @@ class ScheduleService:
             
             current += timedelta(days=1)
         
-        return ClassScheduleView(
+        result = ClassScheduleView(
             class_id=class_id,
             section_id=section_id,
             start_date=start_date,
             end_date=end_date,
             daily_schedules=daily_schedules,
         )
+        
+        # Cache the result (6 hours) - serialize Pydantic model
+        await cache.set(cache_key, result.model_dump(mode="json"), CacheTTL.TIMETABLE)
+        
+        return result
     
     async def get_teacher_schedule(
         self,
