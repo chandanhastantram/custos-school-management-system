@@ -188,6 +188,11 @@ class Permission(str, Enum):
     HOSTEL_MANAGE = "hostel:manage"
     HOSTEL_ASSIGN = "hostel:assign"
     
+    # Library
+    LIBRARY_VIEW = "library:view"
+    LIBRARY_MANAGE = "library:manage"
+    LIBRARY_ISSUE = "library:issue"
+    
     # HR & Payroll
     HR_MANAGE = "hr:manage"
     PAYROLL_RUN = "payroll:run"
@@ -214,6 +219,14 @@ class Permission(str, Enum):
     CORRECTION_APPROVE = "correction:approve"    # Approve/reject corrections
     CORRECTION_VIEW = "correction:view"          # View correction history
     CORRECTION_OVERRIDE = "correction:override"  # Override time locks
+    
+    # Surveys & Feedback
+    SURVEY_VIEW = "survey:view"
+    SURVEY_CREATE = "survey:create"
+    SURVEY_UPDATE = "survey:update"
+    SURVEY_DELETE = "survey:delete"
+    SURVEY_RESULTS_VIEW = "survey:results_view"
+    SURVEY_SUBMIT = "survey:submit"  # Student permission
 
 
 # Role-Permission mapping
@@ -305,6 +318,12 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.CORRECTION_APPROVE,
         Permission.CORRECTION_VIEW,
         Permission.CORRECTION_OVERRIDE,  # Principal can override time locks
+        # Surveys & Feedback
+        Permission.SURVEY_VIEW,
+        Permission.SURVEY_CREATE,
+        Permission.SURVEY_UPDATE,
+        Permission.SURVEY_DELETE,
+        Permission.SURVEY_RESULTS_VIEW,
     },
     
     SystemRole.SUB_ADMIN: {
@@ -355,6 +374,11 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.CORRECTION_REQUEST,
         Permission.CORRECTION_APPROVE,
         Permission.CORRECTION_VIEW,
+        # Surveys & Feedback
+        Permission.SURVEY_VIEW,
+        Permission.SURVEY_CREATE,
+        Permission.SURVEY_UPDATE,
+        Permission.SURVEY_RESULTS_VIEW,
     },
     
     SystemRole.TEACHER: {
@@ -407,6 +431,9 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         # AI Insights (own classes/self only, enforced in service)
         Permission.INSIGHTS_REQUEST,
         Permission.INSIGHTS_VIEW,
+        # Surveys & Feedback (view results for own courses)
+        Permission.SURVEY_VIEW,
+        Permission.SURVEY_RESULTS_VIEW,
     },
     
     SystemRole.STUDENT: {
@@ -435,6 +462,8 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.HOSTEL_VIEW,
         # Analytics (activity score only)
         Permission.ANALYTICS_VIEW_STUDENT,
+        # Surveys & Feedback
+        Permission.SURVEY_SUBMIT,
     },
     
     SystemRole.PARENT: {

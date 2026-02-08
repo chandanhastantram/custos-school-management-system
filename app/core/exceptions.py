@@ -154,3 +154,40 @@ class PermissionDeniedError(CustosException):
             status_code=403,
             details=details,
         )
+
+
+class NotFoundError(CustosException):
+    """Generic not found error."""
+    
+    def __init__(self, message: str = "Resource not found", details: Optional[dict] = None):
+        super().__init__(
+            message=message,
+            code="NOT_FOUND",
+            status_code=404,
+            details=details,
+        )
+
+
+class BadRequestError(CustosException):
+    """Bad request error."""
+    
+    def __init__(self, message: str = "Bad request", details: Optional[dict] = None):
+        super().__init__(
+            message=message,
+            code="BAD_REQUEST",
+            status_code=400,
+            details=details,
+        )
+
+
+class ForbiddenError(CustosException):
+    """Forbidden error."""
+    
+    def __init__(self, message: str = "Forbidden", details: Optional[dict] = None):
+        super().__init__(
+            message=message,
+            code="FORBIDDEN",
+            status_code=403,
+            details=details,
+        )
+

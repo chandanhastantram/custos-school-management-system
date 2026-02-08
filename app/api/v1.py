@@ -79,6 +79,23 @@ from app.platform.gamification.router import router as gamification_router
 from app.platform.reports.router import router as reports_router
 from app.platform.admin.router import router as platform_admin_router
 
+# Examinations (Exam Registration, Hall Tickets, Results)
+from app.examinations.router import router as examinations_router
+
+# Helpdesk (Support Tickets, Applications)
+from app.helpdesk.router import router as helpdesk_router
+
+# Activity Points (Extracurricular Activities)
+from app.activity_points.router import router as activity_points_router
+
+# Online Meetings (Virtual Classroom)
+from app.meetings.router import router as meetings_router
+
+# Messages (Internal Messaging & Inbox)
+from app.messages.router import router as messages_router
+
+# Feedback & Surveys
+from app.feedback.router import router as feedback_router
 
 router = APIRouter(prefix="/v1")
 
@@ -186,3 +203,26 @@ router.include_router(insights_router, prefix="/insights")
 
 # Platform Admin (non-tenant-scoped)
 router.include_router(platform_admin_router)
+
+# Examinations (Exam Registration, Hall Tickets, Results, Revaluation)
+router.include_router(examinations_router, prefix="/examinations")
+
+# Helpdesk (Support Tickets, Applications, Transcripts, Grace Marks)
+router.include_router(helpdesk_router, prefix="/helpdesk")
+
+# Activity Points (Extracurricular Activities, Submissions, Certificates)
+router.include_router(activity_points_router, prefix="/activity-points")
+
+# Online Meetings (Virtual Classroom, Attendance Tracking)
+router.include_router(meetings_router, prefix="/meetings")
+
+# Messages (Internal Messaging, Inbox, Circulars)
+router.include_router(messages_router, prefix="/messages")
+
+# Feedback & Surveys (Course/Faculty/General Feedback)
+router.include_router(feedback_router, prefix="/feedback")
+
+# Library Management
+from app.library.router import router as library_router
+router.include_router(library_router, prefix="/library")
+

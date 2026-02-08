@@ -62,6 +62,10 @@ class CurrentUser(BaseModel):
         from_attributes = True
 
 
+# Alias for backward compatibility
+UserResponse = CurrentUser
+
+
 class AuthContext(BaseModel):
     """Authentication context for request."""
     user_id: UUID

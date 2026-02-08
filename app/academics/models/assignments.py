@@ -112,6 +112,12 @@ class Submission(TenantBaseModel):
     graded_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     feedback: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
+    # File attachments
+    file_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    file_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    file_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    file_size_bytes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    
     # Relationships
     assignment: Mapped["Assignment"] = relationship("Assignment", back_populates="submissions")
     answers: Mapped[List["SubmissionAnswer"]] = relationship("SubmissionAnswer", back_populates="submission")

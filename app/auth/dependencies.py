@@ -130,3 +130,24 @@ def require_role(role: str) -> Callable:
 # Convenience type aliases
 CurrentUser = Annotated[AuthContext, Depends(get_current_user)]
 ActiveUser = Annotated[AuthContext, Depends(get_current_active_user)]
+
+# Alias for backward compatibility
+require_permissions = require_any_permission
+
+
+def require_roles(roles: List[str]) -> Callable:
+    """Dependency factory to require any of the specified roles."""
+    
+    async def role_checker(
+        user: Annotated[AuthContext, Depends(get_current_user)],
+    ) -> AuthContext:
+        if not any(user.has_role(role) for role in roles):
+            raise AuthorizationError(
+                f"One of roles required: {roles}",
+                details={"required": roles, "user_roles": user.roles},
+            )
+        return user
+    
+    return role_checker
+
+

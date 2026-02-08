@@ -7,11 +7,17 @@ Application settings and environment variables.
 from functools import lru_cache
 from typing import List, Optional
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings."""
+    
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore"
+    )
     
     # Application
     app_name: str = "CUSTOS"
@@ -22,7 +28,7 @@ class Settings(BaseSettings):
     port: int = 8000
     
     # Database
-    database_url: str = "postgresql+asyncpg://custos:custos@localhost:5432/custos_db"
+    database_url: str = "sqlite+aiosqlite:///./custos.db"
     db_pool_size: int = 10
     db_max_overflow: int = 20
     db_echo: bool = False
@@ -34,8 +40,13 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 7
     password_hash_rounds: int = 12
     
-    # CORS
-    allowed_origins: List[str] = ["http://localhost:3000", "http://localhost:8080"]
+    # CORS - stored as comma-separated string, parsed on access
+    allowed_origins_str: str = "http://localhost:3000,http://localhost:8080"
+    
+    @property
+    def allowed_origins(self) -> List[str]:
+        """Parse allowed origins from comma-separated string."""
+        return [origin.strip() for origin in self.allowed_origins_str.split(",")]
     
     # AI
     openai_api_key: Optional[str] = None
@@ -58,10 +69,6 @@ class Settings(BaseSettings):
     # Redis (for background tasks)
     redis_url: str = "redis://localhost:6379/0"
     redis_password: Optional[str] = None
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
 
 
 @lru_cache()
@@ -71,3 +78,4 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+

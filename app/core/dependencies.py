@@ -23,3 +23,8 @@ async def get_tenant_id(
 ) -> str:
     """Extract tenant ID from header."""
     return x_tenant_id
+
+
+# Alias for backward compatibility
+get_current_tenant_id = get_tenant_id
+

@@ -21,14 +21,22 @@ class Base(DeclarativeBase):
     pass
 
 
-# Create async engine
-engine = create_async_engine(
-    settings.database_url,
-    echo=settings.db_echo,
-    pool_size=settings.db_pool_size,
-    max_overflow=settings.db_max_overflow,
-    pool_pre_ping=True,
-)
+# Create async engine with conditional configuration for SQLite
+# SQLite doesn't support pool_size and max_overflow
+if settings.database_url.startswith("sqlite"):
+    engine = create_async_engine(
+        settings.database_url,
+        echo=settings.db_echo,
+        connect_args={"check_same_thread": False},
+    )
+else:
+    engine = create_async_engine(
+        settings.database_url,
+        echo=settings.db_echo,
+        pool_size=settings.db_pool_size,
+        max_overflow=settings.db_max_overflow,
+        pool_pre_ping=True,
+    )
 
 # Session factory
 AsyncSessionLocal = async_sessionmaker(

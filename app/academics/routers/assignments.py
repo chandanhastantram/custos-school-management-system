@@ -151,3 +151,77 @@ async def grade_submission(
     return await service.grade_submission(
         submission_id, user.user_id, marks_obtained, feedback
     )
+
+
+# File Upload for Submissions
+@router.post("/submissions/{submission_id}/upload")
+async def upload_submission_file(
+    submission_id: UUID,
+    file_url: str,
+    file_name: str,
+    file_type: str,
+    file_size_bytes: int,
+    user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Upload file attachment for submission.
+    
+    The file should already be uploaded to storage (S3/local).
+    This endpoint records the file metadata with the submission.
+    """
+    service = AssignmentService(db, user.tenant_id)
+    return await service.attach_file_to_submission(
+        submission_id=submission_id,
+        student_id=user.user_id,
+        file_url=file_url,
+        file_name=file_name,
+        file_type=file_type,
+        file_size_bytes=file_size_bytes,
+    )
+
+
+# Student-specific endpoints
+@router.get("/my-assignments")
+async def get_my_assignments(
+    user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+    status: Optional[str] = None,
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+):
+    """Get assignments for current student with submission status."""
+    service = AssignmentService(db, user.tenant_id)
+    return await service.get_student_assignments(
+        student_id=user.user_id, status=status, page=page, size=size
+    )
+
+
+@router.get("/submissions/{submission_id}")
+async def get_submission_details(
+    submission_id: UUID,
+    user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get submission details including file and grade."""
+    service = AssignmentService(db, user.tenant_id)
+    return await service.get_submission(submission_id, user.user_id)
+
+
+# Teacher: List all submissions for an assignment
+@router.get("/{assignment_id}/submissions")
+async def list_assignment_submissions(
+    assignment_id: UUID,
+    user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+    status: Optional[str] = None,
+    page: int = Query(1, ge=1),
+    size: int = Query(50, ge=1, le=100),
+    _=Depends(require_permission(Permission.ASSIGNMENT_VIEW)),
+):
+    """List all submissions for an assignment (Teacher view)."""
+    service = AssignmentService(db, user.tenant_id)
+    return await service.get_assignment_submissions(
+        assignment_id=assignment_id, status=status, page=page, size=size
+    )
+

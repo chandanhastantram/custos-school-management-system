@@ -256,3 +256,127 @@ class AssignmentService:
         
         await self.session.commit()
         return submission
+    
+    # File Attachment
+    async def attach_file_to_submission(
+        self,
+        submission_id: UUID,
+        student_id: UUID,
+        file_url: str,
+        file_name: str,
+        file_type: str,
+        file_size_bytes: int,
+    ) -> Submission:
+        """Attach file to submission."""
+        query = select(Submission).where(
+            Submission.tenant_id == self.tenant_id,
+            Submission.id == submission_id,
+            Submission.student_id == student_id,
+        )
+        result = await self.session.execute(query)
+        submission = result.scalar_one_or_none()
+        if not submission:
+            raise ResourceNotFoundError("Submission", str(submission_id))
+        
+        submission.file_url = file_url
+        submission.file_name = file_name
+        submission.file_type = file_type
+        submission.file_size_bytes = file_size_bytes
+        
+        await self.session.commit()
+        return submission
+    
+    # Student: Get my assignments
+    async def get_student_assignments(
+        self,
+        student_id: UUID,
+        status: Optional[str] = None,
+        page: int = 1,
+        size: int = 20,
+    ) -> dict:
+        """Get assignments for student with their submission status."""
+        # Get published assignments for student's section
+        # For now, get all published assignments
+        query = select(Assignment).where(
+            Assignment.tenant_id == self.tenant_id,
+            Assignment.status == AssignmentStatus.PUBLISHED,
+        ).order_by(Assignment.due_date.desc())
+        
+        result = await self.session.execute(query)
+        assignments = list(result.scalars().all())
+        
+        # Get submissions for this student
+        sub_query = select(Submission).where(
+            Submission.tenant_id == self.tenant_id,
+            Submission.student_id == student_id,
+        )
+        sub_result = await self.session.execute(sub_query)
+        submissions_map = {s.assignment_id: s for s in sub_result.scalars().all()}
+        
+        items = []
+        for a in assignments:
+            sub = submissions_map.get(a.id)
+            items.append({
+                "assignment": a,
+                "submission": sub,
+                "status": sub.status.value if sub else "not_started",
+            })
+        
+        # Filter by status if provided
+        if status:
+            items = [i for i in items if i["status"] == status]
+        
+        skip = (page - 1) * size
+        return {
+            "items": items[skip:skip+size],
+            "total": len(items),
+            "page": page,
+            "size": size,
+        }
+    
+    async def get_submission(self, submission_id: UUID, user_id: UUID) -> Submission:
+        """Get submission details."""
+        query = select(Submission).where(
+            Submission.tenant_id == self.tenant_id,
+            Submission.id == submission_id,
+        ).options(
+            selectinload(Submission.answers),
+            selectinload(Submission.assignment),
+        )
+        result = await self.session.execute(query)
+        submission = result.scalar_one_or_none()
+        if not submission:
+            raise ResourceNotFoundError("Submission", str(submission_id))
+        return submission
+    
+    async def get_assignment_submissions(
+        self,
+        assignment_id: UUID,
+        status: Optional[str] = None,
+        page: int = 1,
+        size: int = 50,
+    ) -> dict:
+        """Get all submissions for an assignment (Teacher)."""
+        query = select(Submission).where(
+            Submission.tenant_id == self.tenant_id,
+            Submission.assignment_id == assignment_id,
+        )
+        
+        if status:
+            query = query.where(Submission.status == status)
+        
+        count_query = select(func.count()).select_from(query.subquery())
+        count_result = await self.session.execute(count_query)
+        total = count_result.scalar() or 0
+        
+        skip = (page - 1) * size
+        query = query.order_by(Submission.submitted_at.desc()).offset(skip).limit(size)
+        result = await self.session.execute(query)
+        
+        return {
+            "items": list(result.scalars().all()),
+            "total": total,
+            "page": page,
+            "size": size,
+        }
+

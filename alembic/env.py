@@ -10,8 +10,40 @@ from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy import CHAR
 
 from alembic import context
+
+# Register UUID type for SQLite (which doesn't support UUID natively)
+# This makes migrations work on SQLite by converting UUID to CHAR(36)
+import sqlalchemy
+from sqlalchemy.dialects import sqlite
+from sqlalchemy.dialects.postgresql import UUID as PostgresUUID, JSON as PostgresJSON
+from sqlalchemy.ext.compiler import compiles
+
+# SQLite foreign key pragma - only for SQLite connections
+@sqlalchemy.event.listens_for(sqlalchemy.engine.Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    """Enable foreign keys for SQLite only."""
+    # Check if this is a SQLite connection
+    if 'sqlite' in type(dbapi_connection).__module__:
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
+# Register type compiler for PostgreSQL UUID -> SQLite CHAR(36)
+@compiles(PostgresUUID, "sqlite")
+def compile_uuid_sqlite(type_, compiler_obj, **kw):
+    """Compile PostgreSQL UUID as CHAR(36) for SQLite."""
+    return "CHAR(36)"
+
+# Register type compiler for PostgreSQL JSON -> SQLite TEXT
+@compiles(PostgresJSON, "sqlite")
+def compile_json_sqlite(type_, compiler_obj, **kw):
+    """Compile PostgreSQL JSON as TEXT for SQLite."""
+    return "TEXT"
+
 
 # Import base and all models for new structure
 from app.core.base_model import BaseModel
@@ -79,7 +111,12 @@ def run_migrations_offline() -> None:
 
 def do_run_migrations(connection: Connection) -> None:
     """Run migrations with connection."""
-    context.configure(connection=connection, target_metadata=target_metadata)
+    # Use render_as_batch for SQLite to support constraint operations
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        render_as_batch=True,  # Required for SQLite ALTER TABLE operations
+    )
 
     with context.begin_transaction():
         context.run_migrations()
