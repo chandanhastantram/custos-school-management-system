@@ -16,8 +16,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.auth.dependencies import CurrentUser
-from app.middleware.tenant import get_current_tenant_id
+from app.auth.dependencies import CurrentUser, require_permission
+from app.core.dependencies import get_current_tenant_id
 from app.core.corrections import (
     CorrectionService,
     EntityType,
@@ -27,6 +27,7 @@ from app.core.corrections import (
     TIME_LOCKS,
     is_time_locked,
 )
+from app.users.rbac import Permission
 
 logger = logging.getLogger(__name__)
 
@@ -122,14 +123,13 @@ async def approve_correction(
     user: CurrentUser = None,
     db: AsyncSession = Depends(get_db),
     tenant_id: UUID = Depends(get_current_tenant_id),
+    _=Depends(require_permission(Permission.CORRECTION_APPROVE)),
 ):
     """
     Approve and apply a pending correction.
     
-    Only admins can approve corrections.
+    Requires the CORRECTION_APPROVE permission (typically admins/principals).
     """
-    # TODO: Check CORRECTION_APPROVE permission
-    
     service = CorrectionService(db, tenant_id)
     result = await service.approve_and_apply(
         request_id=request_id,

@@ -68,6 +68,7 @@ from app.analytics.router import router as analytics_router
 
 # Governance
 from app.governance.router import router as governance_router
+from app.core.corrections_router import router as corrections_router
 
 # AI Insights
 from app.insights.router import router as insights_router
@@ -197,6 +198,9 @@ router.include_router(analytics_router, prefix="/analytics")
 
 # Governance
 router.include_router(governance_router, prefix="/governance")
+
+# Corrections (Safe Reversal Framework)
+router.include_router(corrections_router, prefix="/corrections")
 
 # AI Insights
 router.include_router(insights_router, prefix="/insights")

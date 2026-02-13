@@ -13,11 +13,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.auth.service import AuthService
 from app.auth.schemas import (
-    LoginRequest, TokenResponse, RefreshRequest,
-    ChangePasswordRequest, ForgotPasswordRequest, ResetPasswordRequest,
+    LoginRequest,
+    TokenResponse,
+    RefreshRequest,
+    ChangePasswordRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
     CurrentUser,
 )
 from app.auth.dependencies import CurrentUser as AuthUser
+from app.users.service import UserService
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -126,16 +131,25 @@ async def reset_password(
 
 
 @router.get("/me", response_model=CurrentUser)
-async def get_current_user(user: AuthUser):
+async def get_current_user(
+    user: AuthUser,
+    db: AsyncSession = Depends(get_db),
+):
     """
     Get current authenticated user info.
+    
+    Loads full profile details from the database while using
+    roles and permissions from the auth context.
     """
+    service = UserService(db, user.tenant_id)
+    db_user = await service.get_user(user.user_id)
+    
     return CurrentUser(
-        id=user.user_id,
-        tenant_id=user.tenant_id,
-        email=user.email,
-        first_name="",  # Would load from DB
-        last_name="",
+        id=db_user.id,
+        tenant_id=db_user.tenant_id,
+        email=db_user.email,
+        first_name=db_user.first_name,
+        last_name=db_user.last_name,
         roles=user.roles,
         permissions=list(user.permissions),
     )
