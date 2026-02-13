@@ -39,12 +39,18 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
 
       login: (token, refreshToken, user) => {
+        console.log("🔐 Auth Store - Login called with:", { token, refreshToken, user });
         set({ 
           token, 
           refreshToken, 
           user, 
           isAuthenticated: true 
         });
+        console.log("🔐 Auth Store - State after login:", get());
+        // Force persist to localStorage
+        setTimeout(() => {
+          console.log("🔐 Auth Store - State from localStorage:", localStorage.getItem('custos-auth'));
+        }, 100);
       },
 
       logout: () => {

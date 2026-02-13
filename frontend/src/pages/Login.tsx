@@ -162,8 +162,13 @@ const Login = () => {
           };
           console.log("Demo login - setting user:", user);
           login("demo-token", "demo-refresh", user);
-          console.log("After login, auth state:", useAuthStore.getState());
-          navigate("/dashboard");
+          
+          // Wait a bit for state to persist before navigating
+          setTimeout(() => {
+            console.log("After login, auth state:", useAuthStore.getState());
+            console.log("isAuthenticated:", useAuthStore.getState().isAuthenticated);
+            navigate("/dashboard");
+          }, 200);
         } else {
           setError("Invalid credentials. Try admin@custos.school / Admin@123");
         }
