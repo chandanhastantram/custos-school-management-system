@@ -183,6 +183,10 @@ const Login = () => {
         email: email.toLowerCase(),
         password,
         remember_me: false,
+      }, {
+        headers: {
+          'X-Tenant-ID': tenant!.id,
+        }
       });
 
       // Fetch user details

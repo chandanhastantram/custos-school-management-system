@@ -4,6 +4,10 @@ CUSTOS Database Seeder
 Seed initial data for development and testing.
 """
 
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
+
 import asyncio
 from datetime import date, timedelta
 from uuid import uuid4
@@ -11,7 +15,7 @@ from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
-from app.auth.password import hash_password
+from app.core.security import hash_password
 from app.models.tenant import Tenant, TenantStatus, TenantType
 from app.models.user import User, Role, Permission, UserStatus
 from app.models.academic import AcademicYear, Class, Section, Subject

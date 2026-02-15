@@ -191,3 +191,14 @@ class ForbiddenError(CustosException):
             details=details,
         )
 
+
+class ConflictError(CustosException):
+    """Conflict error."""
+    
+    def __init__(self, message: str = "Conflict", details: Optional[dict] = None):
+        super().__init__(
+            message=message,
+            code="CONFLICT",
+            status_code=409,
+            details=details,
+        )

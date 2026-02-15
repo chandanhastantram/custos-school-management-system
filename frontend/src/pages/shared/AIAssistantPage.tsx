@@ -40,57 +40,6 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   { icon: HelpCircle, title: "System Help", prompt: "How do I export student data to Excel?", color: "text-cyan-600 bg-cyan-100" },
 ];
 
-const DEMO_RESPONSES: Record<string, string> = {
-  "default": `I'm **CUSTOS AI Assistant**, here to help you with:
-
-- 📊 **Analytics & Reports** - Performance analysis, attendance trends
-- 📅 **Scheduling** - Timetables, meetings, events
-- 💰 **Finance** - Fee calculations, payment tracking
-- 📝 **Academic** - Lesson planning, curriculum queries
-- 🔧 **System Help** - Navigation, features, troubleshooting
-
-What would you like help with today?`,
-  "performance": `## Class 10-A Performance Analysis
-
-Based on the mid-term examination data:
-
-### Key Insights
-- **Average Score**: 78.5% (↑5% from last exam)
-- **Top Performer**: Aisha Sharma (94.5%)
-- **Pass Rate**: 97%
-
-### Subject-wise Breakdown
-| Subject | Avg Score | Trend |
-|---------|----------|-------|
-| Mathematics | 82% | ↑ |
-| Science | 78% | ↑ |
-| English | 75% | → |
-
-### Recommendations
-1. Focus on English writing skills
-2. Continue math enrichment activities
-3. Consider peer tutoring for struggling students`,
-  "meeting": `## Parent-Teacher Meeting Plan
-
-### Suggested Schedule
-- **Date**: December 20, 2024
-- **Time**: 9:00 AM - 1:00 PM
-- **Venue**: School Auditorium
-
-### Agenda
-1. Welcome address (15 min)
-2. Academic progress review (45 min)
-3. Break (15 min)
-4. Individual parent slots (2 hrs)
-
-### Action Items
-- [ ] Send invitations to parents
-- [ ] Prepare progress reports
-- [ ] Set up appointment slots
-
-Would you like me to draft the invitation message?`,
-};
-
 const AIAssistantPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -132,24 +81,77 @@ const AIAssistantPage = () => {
     }
     useQuery();
 
-    // Simulate AI response
-    setTimeout(() => {
-      let response = DEMO_RESPONSES.default;
-      if (messageText.toLowerCase().includes("performance") || messageText.toLowerCase().includes("analyze")) {
-        response = DEMO_RESPONSES.performance;
-      } else if (messageText.toLowerCase().includes("meeting") || messageText.toLowerCase().includes("schedule")) {
-        response = DEMO_RESPONSES.meeting;
+    try {
+      // Call real AI API
+      const { default: aiApi } = await import("@/services/ai-api");
+      
+      const response = await aiApi.solveDoubt({
+        question: messageText,
+        subject: "General", // Could be extracted from context
+        context: messages.length > 0 ? messages[messages.length - 1].content : undefined
+      });
+
+      // Format response with steps and examples
+      let formattedResponse = `${response.answer}\n\n`;
+      
+      if (response.steps && response.steps.length > 0) {
+        formattedResponse += `## Step-by-Step Explanation\n`;
+        response.steps.forEach((step, i) => {
+          formattedResponse += `${i + 1}. ${step}\n`;
+        });
+        formattedResponse += `\n`;
+      }
+
+      if (response.examples && response.examples.length > 0) {
+        formattedResponse += `## Examples\n`;
+        response.examples.forEach(example => {
+          formattedResponse += `- ${example}\n`;
+        });
+        formattedResponse += `\n`;
+      }
+
+      if (response.related_concepts && response.related_concepts.length > 0) {
+        formattedResponse += `## Related Concepts to Review\n`;
+        response.related_concepts.forEach(concept => {
+          formattedResponse += `- ${concept}\n`;
+        });
       }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: response,
+        content: formattedResponse.trim(),
         timestamp: new Date(),
       };
+      
       setMessages(prev => [...prev, assistantMessage]);
+    } catch (error: any) {
+      console.error("AI Error:", error);
+      
+      // Fallback to helpful error message
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: `I apologize, but I encountered an error processing your question. ${
+          error.response?.status === 401 
+            ? "Please make sure you're logged in." 
+            : error.response?.status === 429
+            ? "AI usage limit reached. Please try again later."
+            : "Please try rephrasing your question or contact support if the issue persists."
+        }`,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+      
+      toast({
+        title: "AI Error",
+        description: error.message || "Failed to get AI response",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleCopy = (content: string) => {

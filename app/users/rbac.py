@@ -31,6 +31,7 @@ class Permission(str, Enum):
     USER_UPDATE = "user:update"
     USER_DELETE = "user:delete"
     USER_MANAGE_ROLES = "user:manage_roles"
+    USER_EXPORT = "user:export"
     
     # Students
     STUDENT_VIEW = "student:view"
@@ -446,6 +447,7 @@ ROLE_PERMISSIONS: Dict[SystemRole, Set[Permission]] = {
         Permission.ASSIGNMENT_SUBMIT,
         Permission.WORKSHEET_VIEW,
         Permission.AI_DOUBT_SOLVER,
+        Permission.AI_QUESTION_GEN,  # Allow students to generate quizzes for self-study
         Permission.REPORT_VIEW_OWN,
         Permission.CALENDAR_VIEW,
         Permission.TIMETABLE_VIEW,

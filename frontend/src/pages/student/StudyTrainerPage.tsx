@@ -53,82 +53,7 @@ const SUBJECTS: Subject[] = [
   { id: "history", name: "History", icon: "🏛️", topics: ["Ancient", "Medieval", "Modern", "World Wars"] },
 ];
 
-const DEMO_RESPONSES: Record<string, string> = {
-  algebra: `Great question! Let me explain **Quadratic Equations** step by step.
 
-## What is a Quadratic Equation?
-A quadratic equation is a polynomial equation of degree 2, in the form:
-**ax² + bx + c = 0**
-
-Where a, b, and c are constants, and a ≠ 0.
-
-## How to Solve?
-There are 3 main methods:
-1. **Factoring** - When the equation can be factored
-2. **Quadratic Formula** - x = (-b ± √(b²-4ac)) / 2a
-3. **Completing the Square**
-
-### Example
-Solve: x² - 5x + 6 = 0
-
-**Solution:**
-- Factor: (x-2)(x-3) = 0
-- x = 2 or x = 3
-
-Would you like me to give you a practice problem?`,
-
-  practice: `## 📝 Practice Question
-
-**Solve the quadratic equation:**
-x² - 7x + 12 = 0
-
-**Options:**
-A) x = 3, x = 4
-B) x = 2, x = 6
-C) x = 1, x = 12
-D) x = -3, x = -4
-
-Take your time and try to solve it! Click on your answer when ready.`,
-
-  correct: `## ✅ Correct! Excellent work!
-
-**x² - 7x + 12 = 0**
-
-You factored it correctly:
-(x - 3)(x - 4) = 0
-
-So x = 3 or x = 4
-
-### Key Insight:
-Always check if two numbers:
-- Multiply to give c (12)
-- Add to give b (-7)
-
-Here: -3 × -4 = 12 and -3 + -4 = -7 ✓
-
-**Your accuracy: 85%** 📈
-
-Ready for another question?`,
-
-  wrong: `## ❌ Not quite! Let's work through this together.
-
-**x² - 7x + 12 = 0**
-
-To factor, we need two numbers that:
-- Multiply to give 12
-- Add to give -7
-
-Let's try: -3 and -4
-- (-3) × (-4) = 12 ✓
-- (-3) + (-4) = -7 ✓
-
-So: (x - 3)(x - 4) = 0
-**x = 3 or x = 4**
-
-The correct answer was **A**.
-
-Would you like me to explain this differently, or try another problem?`,
-};
 
 const StudyTrainerContent = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -202,45 +127,80 @@ I'm your AI Study Trainer. I'll help you master **${topic}** in **${SUBJECTS.fin
     setIsLoading(true);
     useQuery();
 
-    // Simulate AI response
-    setTimeout(() => {
-      let response = DEMO_RESPONSES.algebra;
+    try {
+      // Call real AI API
+      const { default: aiApi } = await import("@/services/ai-api");
+      
+      const response = await aiApi.solveDoubt({
+        question: messageText,
+        subject: selectedSubject || "General",
+        context: messages.length > 0 ? messages[messages.length - 1].content : undefined
+      });
+
+      // Format response
+      let formattedResponse = `${response.answer}\n\n`;
       let msgType: Message["type"] = "explanation";
       
-      if (messageText.toLowerCase().includes("practice") || messageText.toLowerCase().includes("question")) {
-        response = DEMO_RESPONSES.practice;
-        msgType = "question";
-      } else if (messageText.toLowerCase().includes("a)") || messageText === "A") {
-        response = DEMO_RESPONSES.correct;
-        msgType = "text";
-        if (session) {
-          setSession({
-            ...session,
-            questionsAnswered: session.questionsAnswered + 1,
-            correctAnswers: session.correctAnswers + 1,
-          });
-        }
-      } else if (messageText.match(/^[bcd]\)?$/i)) {
-        response = DEMO_RESPONSES.wrong;
-        msgType = "text";
-        if (session) {
-          setSession({
-            ...session,
-            questionsAnswered: session.questionsAnswered + 1,
-          });
-        }
+      if (response.steps && response.steps.length > 0) {
+        formattedResponse += `## Step-by-Step Explanation\n`;
+        response.steps.forEach((step, i) => {
+          formattedResponse += `${i + 1}. ${step}\n`;
+        });
+        formattedResponse += `\n`;
       }
 
       const tutorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "tutor",
-        content: response,
+        content: formattedResponse.trim(),
         type: msgType,
         timestamp: new Date(),
       };
+      
       setMessages(prev => [...prev, tutorMessage]);
+      
+      if (session) {
+        setSession({
+          ...session,
+          questionsAnswered: session.questionsAnswered + 1,
+        });
+      }
+
+    } catch (error: any) {
+      console.error("AI Error:", error);
+      
+      let errorMsg = "I apologize, but I'm having trouble connecting to my brain right now.";
+      
+      if (error.response?.status === 401) {
+        errorMsg = "Authentication failed. Please log in again to continue.";
+        toast({
+          title: "Session Expired",
+          description: "Please sign in again to use AI features",
+          variant: "destructive",
+        });
+      } else if (error.message === "Network Error") {
+        errorMsg = "I'm having trouble reaching the server. Please check your connection.";
+      } else if (error.response?.data?.detail) {
+        errorMsg = `Error: ${error.response.data.detail}`;
+      }
+
+      toast({
+        title: "AI Error",
+        description: error.message || "Failed to get response",
+        variant: "destructive",
+      });
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "tutor",
+        content: errorMsg,
+        type: "text",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   // Subject selection view

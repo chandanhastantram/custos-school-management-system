@@ -36,16 +36,13 @@ export interface RegisterRequest {
 }
 
 export const authApi = {
-  async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const formData = new FormData();
-    formData.append('username', credentials.email);
-    formData.append('password', credentials.password);
-
-    const response = await apiClient.post<LoginResponse>('/auth/login', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+  async login(credentials: LoginRequest, tenantId?: string): Promise<LoginResponse> {
+    const config = tenantId ? { headers: { 'X-Tenant-ID': tenantId } } : {};
+    
+    const response = await apiClient.post<LoginResponse>('/auth/login', {
+      email: credentials.email,
+      password: credentials.password,
+    }, config);
 
     // Store tokens and user
     const { access_token, refresh_token, user } = response.data;

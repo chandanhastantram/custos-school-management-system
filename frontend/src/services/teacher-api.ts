@@ -41,6 +41,11 @@ export const teacherApi = {
     return response.data;
   },
 
+  async deleteLessonPlan(id: string) {
+    const response = await apiClient.delete(`/academics/lesson-plans/${id}`);
+    return response.data;
+  },
+
   async generateLessonPlan(data: { subject: string; topic: string; grade: number }) {
     const response = await apiClient.post('/ai/lesson-plan/generate', data);
     return response.data;

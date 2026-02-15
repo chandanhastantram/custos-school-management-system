@@ -70,7 +70,8 @@ const fetchUsers = async (params: {
   queryParams.set("page", String(params.page || 1));
   queryParams.set("size", String(params.size || 50));
   
-  return apiClient.get<UsersListResponse>(`/users?${queryParams.toString()}`);
+  const response = await apiClient.get<UsersListResponse>(`/users?${queryParams.toString()}`);
+  return response.data;
 };
 
 const createUser = async (data: {
@@ -80,7 +81,8 @@ const createUser = async (data: {
   last_name: string;
   role_ids?: string[];
 }): Promise<UserApiResponse> => {
-  return apiClient.post<UserApiResponse>("/users", data);
+  const response = await apiClient.post<UserApiResponse>("/users", data);
+  return response.data;
 };
 
 const updateUser = async (userId: string, data: {
@@ -88,11 +90,34 @@ const updateUser = async (userId: string, data: {
   last_name?: string;
   status?: string;
 }): Promise<UserApiResponse> => {
-  return apiClient.put<UserApiResponse>(`/users/${userId}`, data);
+  const response = await apiClient.put<UserApiResponse>(`/users/${userId}`, data);
+  return response.data;
 };
 
 const deleteUser = async (userId: string): Promise<void> => {
   await apiClient.delete(`/users/${userId}`);
+};
+
+const exportUsers = async (params: {
+  search?: string;
+  status?: string;
+}): Promise<Blob> => {
+  const queryParams = new URLSearchParams();
+  if (params.search) queryParams.set("search", params.search);
+  if (params.status && params.status !== "all") queryParams.set("status", params.status);
+  
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+  const response = await fetch(`${API_BASE_URL}/users/export?${queryParams.toString()}`, {
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+    },
+  });
+  
+  if (!response.ok) {
+    throw new Error('Export failed');
+  }
+  
+  return response.blob();
 };
 
 const UsersPage = () => {
@@ -185,6 +210,23 @@ const UsersPage = () => {
     setDialogOpen(true);
   };
 
+  const handleExport = async () => {
+    try {
+      const blob = await exportUsers({ search, status });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({ title: "Export successful", description: "Users exported to CSV" });
+    } catch (error) {
+      toast({ title: "Export failed", description: "Could not export users", variant: "destructive" });
+    }
+  };
+
   const handleSave = (data: Omit<User, "id" | "permissions">) => {
     if (demoMode) {
       // Demo mode - local state
@@ -270,7 +312,7 @@ const UsersPage = () => {
               <RefreshCw className="h-4 w-4 mr-1" /> Refresh
             </Button>
           )}
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" /> Export
           </Button>
           <Button size="sm" onClick={handleCreate}>

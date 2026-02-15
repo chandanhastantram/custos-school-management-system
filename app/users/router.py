@@ -111,6 +111,43 @@ async def assign_roles(
     return UserResponse.model_validate(updated_user)
 
 
+@router.get("/export")
+async def export_users(
+    user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+    status: Optional[UserStatus] = None,
+    search: Optional[str] = None,
+    _=Depends(require_permission(Permission.USER_EXPORT)),
+):
+    """
+    Export users to CSV format.
+    
+    Supports filtering by status and search query.
+    Returns CSV file for download.
+    """
+    from fastapi.responses import StreamingResponse
+    from app.users.export import export_users_to_csv, generate_export_filename
+    
+    service = UserService(db, user.tenant_id)
+    
+    # Get all users matching filters (no pagination for export)
+    users, _ = await service.list_users(status, None, search, page=1, size=10000)
+    
+    # Generate CSV content
+    csv_content = export_users_to_csv(users)
+    
+    # Create streaming response
+    filename = generate_export_filename("csv")
+    
+    return StreamingResponse(
+        iter([csv_content]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        }
+    )
+
+
 # Student endpoints
 
 @router.post("/students", response_model=UserResponse)

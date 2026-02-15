@@ -84,7 +84,7 @@ class Tenant(BaseModel):
     custom_domain: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
     
     # Relationships
-    users: Mapped[List["User"]] = relationship("User", back_populates="tenant", lazy="dynamic")
+    users: Mapped[List["User"]] = relationship("User", back_populates="tenant", lazy="selectin")
     subscription: Mapped[Optional["Subscription"]] = relationship(
         "Subscription", back_populates="tenant", uselist=False
     )

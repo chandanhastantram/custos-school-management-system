@@ -41,12 +41,12 @@ class Settings(BaseSettings):
     password_hash_rounds: int = 12
     
     # CORS - stored as comma-separated string, parsed on access
-    allowed_origins_str: str = "http://localhost:3000,http://localhost:8080"
+    allowed_origins: str = "http://localhost:3000,http://localhost:8080,http://localhost:5173"
     
     @property
-    def allowed_origins(self) -> List[str]:
+    def allowed_origins_list(self) -> List[str]:
         """Parse allowed origins from comma-separated string."""
-        return [origin.strip() for origin in self.allowed_origins_str.split(",")]
+        return [origin.strip() for origin in self.allowed_origins.split(",")]
     
     # AI
     openai_api_key: Optional[str] = None

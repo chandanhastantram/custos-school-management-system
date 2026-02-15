@@ -35,6 +35,7 @@ import StudentAnalyticsPage from "./pages/teacher/StudentAnalyticsPage";
 import SyllabusPage from "./pages/teacher/SyllabusPage";
 import StudentDashboardPage from "./pages/student/StudentDashboardPage";
 import StudyTrainerPage from "./pages/student/StudyTrainerPage";
+import AITrainerPage from "./pages/student/AITrainerPage";
 import AssignmentsPage from "./pages/student/AssignmentsPage";
 import TimetablePage from "./pages/student/TimetablePage";
 import FeesPage from "./pages/student/FeesPage";
@@ -120,6 +121,7 @@ const App = () => (
               <Route path="/student/exam-registration" element={<ExamRegistrationPage />} />
               <Route path="/student/hall-ticket" element={<HallTicketPage />} />
               <Route path="/student/study-trainer" element={<StudyTrainerPage />} />
+              <Route path="/student/ai-trainer" element={<AITrainerPage />} />
               {/* Parent routes */}
               <Route path="/parent/progress" element={<ParentDashboardPage />} />
               <Route path="/parent/fees" element={<ParentFeePaymentPage />} />
