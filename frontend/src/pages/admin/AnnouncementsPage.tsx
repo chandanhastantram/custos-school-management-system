@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Megaphone, Plus, Search, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,32 +7,40 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { announcementsApi } from "@/services/admin-api";
+
+const DEMO_ANNOUNCEMENTS = [
+  { 
+    id: 1, 
+    title: "School Reopening After Winter Break", 
+    content: "School will reopen on February 15th. All students are expected to attend...",
+    author: "Principal",
+    date: "2024-02-10",
+    target: "All",
+    priority: "High",
+    views: 450
+  },
+  { 
+    id: 2, 
+    title: "Sports Day Registration Open", 
+    content: "Registration for annual sports day is now open. Students can register...",
+    author: "Sports Coordinator",
+    date: "2024-02-12",
+    target: "Students",
+    priority: "Medium",
+    views: 320
+  },
+];
 
 const AnnouncementsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [announcements, setAnnouncements] = useState(DEMO_ANNOUNCEMENTS);
 
-  const announcements = [
-    { 
-      id: 1, 
-      title: "School Reopening After Winter Break", 
-      content: "School will reopen on February 15th. All students are expected to attend...",
-      author: "Principal",
-      date: "2024-02-10",
-      target: "All",
-      priority: "High",
-      views: 450
-    },
-    { 
-      id: 2, 
-      title: "Sports Day Registration Open", 
-      content: "Registration for annual sports day is now open. Students can register...",
-      author: "Sports Coordinator",
-      date: "2024-02-12",
-      target: "Students",
-      priority: "Medium",
-      views: 320
-    },
-  ];
+  useEffect(() => {
+    announcementsApi.getAnnouncements()
+      .then((data: any) => { if (data?.length) setAnnouncements(data); })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="container py-8">

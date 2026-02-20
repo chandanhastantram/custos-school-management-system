@@ -1,22 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calendar as CalendarIcon, Plus, Filter, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { calendarApi } from "@/services/admin-api";
+
+const DEMO_EVENTS = [
+  { id: 1, title: "Annual Sports Day", date: "2024-02-20", time: "09:00 AM", type: "Event", attendees: 500, location: "Main Ground" },
+  { id: 2, title: "Parent-Teacher Meeting", date: "2024-02-25", time: "02:00 PM", type: "Meeting", attendees: 150, location: "Auditorium" },
+  { id: 3, title: "Science Exhibition", date: "2024-03-05", time: "10:00 AM", type: "Event", attendees: 300, location: "Science Block" },
+];
+
+const DEMO_HOLIDAYS = [
+  { id: 1, name: "Republic Day", date: "2024-01-26", type: "National" },
+  { id: 2, name: "Holi", date: "2024-03-25", type: "Festival" },
+];
 
 const CalendarPage = () => {
-  const upcomingEvents = [
-    { id: 1, title: "Annual Sports Day", date: "2024-02-20", time: "09:00 AM", type: "Event", attendees: 500, location: "Main Ground" },
-    { id: 2, title: "Parent-Teacher Meeting", date: "2024-02-25", time: "02:00 PM", type: "Meeting", attendees: 150, location: "Auditorium" },
-    { id: 3, title: "Science Exhibition", date: "2024-03-05", time: "10:00 AM", type: "Event", attendees: 300, location: "Science Block" },
-  ];
+  const [upcomingEvents, setUpcomingEvents] = useState(DEMO_EVENTS);
+  const holidays = DEMO_HOLIDAYS;
 
-  const holidays = [
-    { id: 1, name: "Republic Day", date: "2024-01-26", type: "National" },
-    { id: 2, name: "Holi", date: "2024-03-25", type: "Festival" },
-  ];
+  useEffect(() => {
+    calendarApi.getEvents()
+      .then((data: any) => { if (data?.length) setUpcomingEvents(data); })
+      .catch(() => {});
+  }, []);
+
 
   return (
     <div className="container py-8">

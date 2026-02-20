@@ -76,7 +76,80 @@ const DEMO_ASSIGNMENTS: Assignment[] = [
   }
 ];
 
+// Reusable assignment card grid
+const AssignmentGrid = ({ assignments, statusConfig, onSubmit }: {
+  assignments: Assignment[];
+  statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }>;
+  onSubmit: (a: Assignment) => void;
+}) => {
+  if (assignments.length === 0) {
+    return (
+      <div className="text-center py-16 text-muted-foreground">
+        <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
+        <p>No assignments found</p>
+      </div>
+    );
+  }
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {assignments.map((assignment, i) => {
+        const config = statusConfig[assignment.status];
+        return (
+          <motion.div key={assignment.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+            <Card className="h-full flex flex-col hover:shadow-lg transition-shadow border-2 hover:border-primary/20">
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between">
+                  <Badge variant="outline" className={cn("text-[10px] py-0", config.color)}>
+                    <config.icon className="h-3 w-3 mr-1" />{config.label}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />{format(new Date(assignment.dueDate), "MMM d, h:mm a")}
+                  </span>
+                </div>
+                <CardTitle className="text-lg mt-2 line-clamp-1">{assignment.title}</CardTitle>
+                <CardDescription className="flex items-center gap-1">
+                  <BookOpen className="h-3 w-3" /> {assignment.subject}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 pb-4">
+                <p className="text-sm text-muted-foreground line-clamp-2 mt-2">{assignment.description}</p>
+                {assignment.status === "graded" && (
+                  <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-100 dark:border-emerald-900/30">
+                    <div className="flex items-center justify-between font-bold text-emerald-700 dark:text-emerald-400">
+                      <span>Score</span><span>{assignment.score}/{assignment.totalMarks}</span>
+                    </div>
+                    <Progress value={(assignment.score! / assignment.totalMarks) * 100} className="h-1.5 mt-2" />
+                    {assignment.feedback && <p className="text-xs text-muted-foreground mt-2">{assignment.feedback}</p>}
+                  </div>
+                )}
+                {(assignment.status === "pending" || assignment.status === "late") && (
+                  <div className="mt-4 space-y-1.5">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Marks</span><span className="font-medium">{assignment.totalMarks} pts</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+              <div className="p-4 pt-0 mt-auto">
+                <Button className="w-full" variant={assignment.status === "pending" || assignment.status === "late" ? "default" : "outline"}
+                  onClick={() => { if (assignment.status === "pending" || assignment.status === "late") onSubmit(assignment); }}>
+                  {assignment.status === "pending" || assignment.status === "late" ? (
+                    <><Upload className="h-4 w-4 mr-2" /> Submit Work</>
+                  ) : (
+                    <><FileText className="h-4 w-4 mr-2" /> View Details</>
+                  )}
+                </Button>
+              </div>
+            </Card>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+};
+
 const AssignmentsPage = () => {
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
@@ -136,83 +209,17 @@ const AssignmentsPage = () => {
         </TabsList>
 
         <TabsContent value="all" className="mt-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredAssignments.map((assignment, i) => {
-              const config = statusConfig[assignment.status];
-              return (
-                <motion.div
-                  key={assignment.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <Card className="h-full flex flex-col hover:shadow-lg transition-shadow border-2 hover:border-primary/20">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between">
-                        <Badge variant="outline" className={cn("text-[10px] py-0", config.color)}>
-                          <config.icon className="h-3 w-3 mr-1" />
-                          {config.label}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground flex items-center">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {format(new Date(assignment.dueDate), "MMM d, h:mm a")}
-                        </span>
-                      </div>
-                      <CardTitle className="text-lg mt-2 line-clamp-1">{assignment.title}</CardTitle>
-                      <CardDescription className="flex items-center gap-1">
-                        <BookOpen className="h-3 w-3" /> {assignment.subject}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-1 pb-4">
-                      <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
-                        {assignment.description}
-                      </p>
-                      
-                      {assignment.status === "graded" && (
-                        <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-100 dark:border-emerald-900/30">
-                          <div className="flex items-center justify-between font-bold text-emerald-700 dark:text-emerald-400">
-                            <span>Score</span>
-                            <span>{assignment.score}/{assignment.totalMarks}</span>
-                          </div>
-                          <Progress value={(assignment.score! / assignment.totalMarks) * 100} className="h-1.5 mt-2" />
-                        </div>
-                      )}
-
-                      {assignment.status === "pending" && (
-                        <div className="mt-4 space-y-2">
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>Time Left</span>
-                            <span className="text-amber-600 font-medium">2 days</span>
-                          </div>
-                          <Progress value={40} className="h-1.5" />
-                        </div>
-                      )}
-                    </CardContent>
-                    <div className="p-4 pt-0 mt-auto">
-                      <Button 
-                        className="w-full" 
-                        variant={assignment.status === "pending" ? "default" : "outline"}
-                        onClick={() => {
-                          setSelectedAssignment(assignment);
-                          if (assignment.status === "pending" || assignment.status === "late") {
-                            setIsSubmitModalOpen(true);
-                          }
-                        }}
-                      >
-                        {assignment.status === "pending" ? (
-                          <><Upload className="h-4 w-4 mr-2" /> Submit Work</>
-                        ) : (
-                          <><FileText className="h-4 w-4 mr-2" /> View Details</>
-                        )}
-                      </Button>
-                    </div>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </div>
+          <AssignmentGrid assignments={filteredAssignments} statusConfig={statusConfig} onSubmit={(a) => { setSelectedAssignment(a); setIsSubmitModalOpen(true); }} />
         </TabsContent>
-        {/* Other TabContents would follow same pattern */}
+        <TabsContent value="pending" className="mt-6">
+          <AssignmentGrid assignments={filteredAssignments.filter(a => a.status === "pending" || a.status === "late")} statusConfig={statusConfig} onSubmit={(a) => { setSelectedAssignment(a); setIsSubmitModalOpen(true); }} />
+        </TabsContent>
+        <TabsContent value="submitted" className="mt-6">
+          <AssignmentGrid assignments={filteredAssignments.filter(a => a.status === "submitted")} statusConfig={statusConfig} onSubmit={() => {}} />
+        </TabsContent>
+        <TabsContent value="graded" className="mt-6">
+          <AssignmentGrid assignments={filteredAssignments.filter(a => a.status === "graded")} statusConfig={statusConfig} onSubmit={() => {}} />
+        </TabsContent>
       </Tabs>
 
       {/* Submit Modal */}

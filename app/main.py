@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
     """Application lifecycle manager."""
     # Startup
     logger.info(f"Starting {settings.app_name} v{settings.app_version}")
-    # await init_db()  # Uncomment if you want auto table creation
+    await init_db()  # Auto-create tables on startup
     
     yield
     

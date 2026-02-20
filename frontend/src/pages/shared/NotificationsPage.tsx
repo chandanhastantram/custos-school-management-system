@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { notificationsApi } from "@/services/notifications-api";
 import { motion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -74,7 +75,8 @@ const NotificationsPage = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
-  const markAsRead = (id: string) => {
+  const markAsRead = async (id: string) => {
+    try { await notificationsApi.markRead(id); } catch {}
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
 

@@ -15,12 +15,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create non-root user
-RUN useradd -m -u 1000 custos && chown -R custos:custos /app
+# Create non-root user and writable dirs
+RUN useradd -m -u 1000 custos && \
+    chown -R custos:custos /app && \
+    mkdir -p /app/uploads && chown custos:custos /app/uploads
 USER custos
 
 # Expose port
 EXPOSE 8000
 
-# Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run with gunicorn + uvicorn workers for production
+CMD ["gunicorn", "app.main:app", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "120"]

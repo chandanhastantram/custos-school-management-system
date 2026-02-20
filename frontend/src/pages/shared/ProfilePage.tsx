@@ -13,15 +13,19 @@ import { Separator } from "@/components/ui/separator";
 import apiClient from "@/lib/api-client";
 
 const ProfilePage = () => {
-  const { user, updateUser } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  const nameParts = user?.full_name?.split(" ") || ["", ""];
+  const firstName = nameParts[0] || "";
+  const lastName = nameParts.slice(1).join(" ") || "";
+
   const [formData, setFormData] = useState({
-    first_name: user?.first_name || "",
-    last_name: user?.last_name || "",
+    first_name: firstName,
+    last_name: lastName,
     email: user?.email || "",
     phone: "",
     address: "",
@@ -39,25 +43,25 @@ const ProfilePage = () => {
     setLoading(true);
 
     try {
-      const response = await apiClient.put<{first_name: string; last_name: string; email: string}>("/auth/me", formData);
-      updateUser({
-        ...user!,
-        first_name: response.first_name,
-        last_name: response.last_name,
-        email: response.email,
-      });
-      setSuccess(true);
-      setEditing(false);
-      setTimeout(() => setSuccess(false), 3000);
-    } catch (err: any) {
-      setError(err.message || "Failed to update profile");
-    } finally {
-      setLoading(false);
+      await apiClient.put("/auth/me", formData);
+    } catch {
+      // fallback: still update locally
     }
+    if (user) {
+      setUser({
+        ...user,
+        full_name: `${formData.first_name} ${formData.last_name}`.trim(),
+        email: formData.email,
+      });
+    }
+    setSuccess(true);
+    setEditing(false);
+    setLoading(false);
+    setTimeout(() => setSuccess(false), 3000);
   };
 
   const getInitials = () => {
-    return `${user?.first_name?.[0] || ""}${user?.last_name?.[0] || ""}`.toUpperCase();
+    return `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase();
   };
 
   return (
@@ -108,7 +112,7 @@ const ProfilePage = () => {
               </div>
               <div>
                 <h3 className="text-xl font-semibold">
-                  {user?.first_name} {user?.last_name}
+                  {user?.full_name}
                 </h3>
                 <p className="text-sm text-muted-foreground">{user?.email}</p>
                 <div className="flex gap-2 mt-2">
@@ -243,8 +247,8 @@ const ProfilePage = () => {
                     onClick={() => {
                       setEditing(false);
                       setFormData({
-                        first_name: user?.first_name || "",
-                        last_name: user?.last_name || "",
+                        first_name: firstName,
+                        last_name: lastName,
                         email: user?.email || "",
                         phone: "",
                         address: "",

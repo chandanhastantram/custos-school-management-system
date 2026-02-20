@@ -79,3 +79,8 @@ alembic/versions/*.pyc
 Thumbs.db
 *.bak
 *.tmp
+
+# Node / Frontend
+node_modules/
+frontend/dist/
+frontend/.env.local

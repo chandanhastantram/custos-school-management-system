@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { messagesApi } from "@/services/messages-api";
+import { motion } from "framer-motion";
 import { format } from "date-fns";
 import {
-  MessageSquare, Search, MoreHorizontal, Send, Paperclip, Smile,
-  Phone, Video, Info, Check, CheckCheck, Image, File, Users,
-  ArrowLeft, Plus, Star, Circle,
+  MessageSquare, Search, Send, Paperclip, Smile,
+  Phone, Video, Info, Check, CheckCheck, Users,
+  ArrowLeft, Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,6 @@ import { cn } from "@/lib/utils";
 interface Conversation {
   id: string;
   name: string;
-  avatar?: string;
   lastMessage: string;
   time: string;
   unread: number;
@@ -32,11 +32,11 @@ interface Message {
   content: string;
   time: string;
   status: "sent" | "delivered" | "read";
-  type: "text" | "image" | "file";
+  type: "text";
 }
 
 // Demo data
-const DEMO_CONVERSATIONS: Conversation[] = [
+const INITIAL_CONVERSATIONS: Conversation[] = [
   { id: "1", name: "Mrs. Sharma (Class Teacher)", lastMessage: "Aisha has been performing well in Mathematics", time: "10:30 AM", unread: 2, online: true },
   { id: "2", name: "Mr. Patel (Science)", lastMessage: "The lab report is due tomorrow", time: "Yesterday", unread: 0, online: false },
   { id: "3", name: "Class 10-A Parents", lastMessage: "Meeting scheduled for Dec 20", time: "Yesterday", unread: 5, online: false, isGroup: true },
@@ -44,44 +44,88 @@ const DEMO_CONVERSATIONS: Conversation[] = [
   { id: "5", name: "Mrs. Verma (English)", lastMessage: "Essay submission deadline extended", time: "3 days ago", unread: 0, online: false },
 ];
 
-const DEMO_MESSAGES: Message[] = [
-  { id: "1", senderId: "other", content: "Good morning! I wanted to discuss Aisha's performance in the recent unit test.", time: "10:15 AM", status: "read", type: "text" },
-  { id: "2", senderId: "me", content: "Good morning Mrs. Sharma! Yes, please go ahead.", time: "10:18 AM", status: "read", type: "text" },
-  { id: "3", senderId: "other", content: "Aisha has been performing exceptionally well in Mathematics. She scored 92/100 in the recent test.", time: "10:20 AM", status: "read", type: "text" },
-  { id: "4", senderId: "other", content: "I'm particularly impressed with her problem-solving skills in algebra.", time: "10:22 AM", status: "read", type: "text" },
-  { id: "5", senderId: "me", content: "That's wonderful to hear! We've been practicing extra at home.", time: "10:25 AM", status: "read", type: "text" },
-  { id: "6", senderId: "other", content: "Keep up the good work! I'll send you some additional practice problems that might help her prepare for the finals.", time: "10:28 AM", status: "read", type: "text" },
-  { id: "7", senderId: "other", content: "Also, there's a parent-teacher meeting scheduled for December 20th. Please confirm your attendance.", time: "10:30 AM", status: "delivered", type: "text" },
-];
+const INITIAL_MESSAGES: Record<string, Message[]> = {
+  "1": [
+    { id: "1", senderId: "other", content: "Good morning! I wanted to discuss Aisha's performance in the recent unit test.", time: "10:15 AM", status: "read", type: "text" },
+    { id: "2", senderId: "me", content: "Good morning Mrs. Sharma! Yes, please go ahead.", time: "10:18 AM", status: "read", type: "text" },
+    { id: "3", senderId: "other", content: "Aisha has been performing exceptionally well in Mathematics. She scored 92/100 in the recent test.", time: "10:20 AM", status: "read", type: "text" },
+    { id: "4", senderId: "me", content: "That's wonderful to hear! We've been practicing extra at home.", time: "10:25 AM", status: "read", type: "text" },
+    { id: "5", senderId: "other", content: "Also, there's a parent-teacher meeting scheduled for December 20th. Please confirm your attendance.", time: "10:30 AM", status: "delivered", type: "text" },
+  ],
+  "2": [
+    { id: "1", senderId: "other", content: "The lab report is due tomorrow. Please remind your child to submit it.", time: "Yesterday", status: "delivered", type: "text" },
+  ],
+  "3": [
+    { id: "1", senderId: "other", content: "Parent-teacher meeting scheduled for Dec 20 at 3:00 PM.", time: "Yesterday", status: "delivered", type: "text" },
+  ],
+  "4": [
+    { id: "1", senderId: "other", content: "This is a reminder that the Q3 fee payment is due.", time: "2 days ago", status: "read", type: "text" },
+  ],
+  "5": [
+    { id: "1", senderId: "other", content: "The essay submission deadline has been extended to Dec 10.", time: "3 days ago", status: "read", type: "text" },
+  ],
+};
 
 const MessagesPage = () => {
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(DEMO_CONVERSATIONS[0]);
+  const [conversations, setConversations] = useState<Conversation[]>(INITIAL_CONVERSATIONS);
+  const [allMessages, setAllMessages] = useState<Record<string, Message[]>>(INITIAL_MESSAGES);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(INITIAL_CONVERSATIONS[0]);
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
-  const [isMobileView, setIsMobileView] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const messages = selectedConversation ? (allMessages[selectedConversation.id] || []) : [];
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [DEMO_MESSAGES]);
+  }, [messages]);
 
-  const handleSend = () => {
-    if (!message.trim()) return;
-    // Demo: just clear the message
+  const handleSend = async () => {
+    if (!message.trim() || !selectedConversation) return;
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    try {
+      await messagesApi.createMessage({
+        subject: "Chat",
+        content: message.trim(),
+        recipient_ids: [selectedConversation.id],
+      });
+    } catch {
+      // fallback: continue with local state
+    }
+    const newMsg: Message = {
+      id: Date.now().toString(),
+      senderId: "me",
+      content: message.trim(),
+      time: timeStr,
+      status: "sent",
+      type: "text",
+    };
+    setAllMessages(prev => ({
+      ...prev,
+      [selectedConversation.id]: [...(prev[selectedConversation.id] || []), newMsg],
+    }));
+    setConversations(prev => prev.map(c =>
+      c.id === selectedConversation.id
+        ? { ...c, lastMessage: message.trim(), time: timeStr, unread: 0 }
+        : c
+    ));
     setMessage("");
   };
 
-  const filteredConversations = DEMO_CONVERSATIONS.filter(c =>
+  const handleSelectConversation = (conv: Conversation) => {
+    setSelectedConversation(conv);
+    setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unread: 0 } : c));
+  };
+
+  const filteredConversations = conversations.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="h-[calc(100vh-8rem)] flex rounded-xl border border-border bg-card overflow-hidden">
       {/* Conversations List */}
-      <div className={cn(
-        "w-80 border-r border-border flex flex-col",
-        selectedConversation && isMobileView ? "hidden md:flex" : "flex"
-      )}>
+      <div className="w-80 border-r border-border flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">
@@ -115,7 +159,7 @@ const MessagesPage = () => {
                     ? "bg-primary/10"
                     : "hover:bg-muted/50"
                 )}
-                onClick={() => setSelectedConversation(conv)}
+                onClick={() => handleSelectConversation(conv)}
               >
                 <div className="flex items-start gap-3">
                   <div className="relative">
@@ -154,10 +198,7 @@ const MessagesPage = () => {
 
       {/* Chat Area */}
       {selectedConversation ? (
-        <div className={cn(
-          "flex-1 flex flex-col",
-          !selectedConversation && isMobileView ? "hidden md:flex" : "flex"
-        )}>
+        <div className="flex-1 flex flex-col">
           {/* Chat Header */}
           <div className="p-4 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -201,7 +242,7 @@ const MessagesPage = () => {
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
-              {DEMO_MESSAGES.map((msg, i) => (
+              {messages.map((msg, i) => (
                 <motion.div
                   key={msg.id}
                   initial={{ opacity: 0, y: 10 }}

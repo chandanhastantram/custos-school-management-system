@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { DollarSign, CreditCard, Download, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { parentApi } from "@/services/parent-api";
 
 const ParentFeePaymentPage = () => {
   const [selectedChild, setSelectedChild] = useState("1");
@@ -17,14 +18,20 @@ const ParentFeePaymentPage = () => {
     { id: "2", name: "Jane Doe", class: "8-B" },
   ];
 
-  const pendingInvoices = [
+  const [pendingInvoices, setPendingInvoices] = useState([
     { id: 1, child: "John Doe", description: "Tuition Fee - Q1 2024", amount: "$2,500", dueDate: "2024-02-28", status: "Pending" },
     { id: 2, child: "Jane Doe", description: "Library Fee", amount: "$150", dueDate: "2024-03-15", status: "Pending" },
-  ];
+  ]);
 
   const paymentHistory = [
     { id: 3, child: "John Doe", description: "Tuition Fee - Q4 2023", amount: "$2,500", paidDate: "2023-12-15", receipt: "RCP-2023-1215" },
   ];
+
+  useEffect(() => {
+    parentApi.getChildFees?.(selectedChild)
+      .then((data: any) => { if (data?.length) setPendingInvoices(data); })
+      .catch(() => {});
+  }, [selectedChild]);
 
   return (
     <div className="container py-8">
