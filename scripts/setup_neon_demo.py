@@ -12,11 +12,11 @@ from datetime import datetime
 
 
 async def setup_neon_demo():
-    """Create demo tenant and user in Neon database using raw SQL."""
+    
     print("🚀 Setting up demo data in Neon PostgreSQL...")
     
     # Connection string from .env
-    DATABASE_URL = "postgresql://neondb_owner:npg_1Tw8FvUjGHfE@ep-quiet-breeze-aijreic6-pooler.c-4.us-east-1.aws.neon.tech/neondb?ssl=require"
+    DATABASE_URL = 
     
     conn = await asyncpg.connect(DATABASE_URL)
     

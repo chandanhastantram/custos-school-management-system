@@ -12,7 +12,7 @@ async def check_enums():
             print(f" - {r['val']}")
             
         print("\nChecking 'tenanttype' values:")
-        rows = await conn.fetch("SELECT unnest(enum_range(NULL::tenanttype)) as val")
+        rows = await conn.fetch("SELECT unnest(enum_range(NULL::tenanttype)) as val")     
         for r in rows:
             print(f" - {r['val']}")
             
