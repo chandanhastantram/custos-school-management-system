@@ -145,6 +145,87 @@ export const announcementsApi = {
   },
 };
 
+// Academics Management
+export const academicsApi = {
+  async getClasses(params?: { page?: number; size?: number }) {
+    const response = await apiClient.get('/academics/classes', { params });
+    return response.data;
+  },
+
+  async createClass(data: { name: string; grade: number }) {
+    const response = await apiClient.post('/academics/classes', data);
+    return response.data;
+  },
+
+  async updateClass(id: string, data: any) {
+    const response = await apiClient.patch(`/academics/classes/${id}`, data);
+    return response.data;
+  },
+
+  async deleteClass(id: string) {
+    const response = await apiClient.delete(`/academics/classes/${id}`);
+    return response.data;
+  },
+
+  async getSections(classId: string) {
+    const response = await apiClient.get(`/academics/classes/${classId}/sections`);
+    return response.data;
+  },
+
+  async createSection(classId: string, data: { name: string; class_teacher_id?: string; room?: string }) {
+    const response = await apiClient.post(`/academics/classes/${classId}/sections`, data);
+    return response.data;
+  },
+
+  async getSubjects(params?: { page?: number; size?: number }) {
+    const response = await apiClient.get('/academics/subjects', { params });
+    return response.data;
+  },
+
+  async createSubject(data: { name: string; code: string; type: string; credits: number; periods_per_week: number }) {
+    const response = await apiClient.post('/academics/subjects', data);
+    return response.data;
+  },
+
+  async deleteSubject(id: string) {
+    const response = await apiClient.delete(`/academics/subjects/${id}`);
+    return response.data;
+  },
+
+  async getAcademicYears() {
+    const response = await apiClient.get('/academics/years');
+    return response.data;
+  },
+};
+
+// Analytics
+export const analyticsApi = {
+  async getDashboardStats(period?: string) {
+    const response = await apiClient.get('/analytics/dashboard', { params: { period } });
+    return response.data;
+  },
+
+  async getAttendanceTrend(params?: { period?: string }) {
+    const response = await apiClient.get('/analytics/attendance-trend', { params });
+    return response.data;
+  },
+
+  async getClassPerformance() {
+    const response = await apiClient.get('/analytics/class-performance');
+    return response.data;
+  },
+
+  async getFeeCollectionStats() {
+    const response = await apiClient.get('/analytics/fee-collection');
+    return response.data;
+  },
+
+  async getTopPerformers(params?: { limit?: number }) {
+    const response = await apiClient.get('/analytics/top-performers', { params });
+    return response.data;
+  },
+};
+
 // Billing
 export const billingApi = {
   async getSubscription() {

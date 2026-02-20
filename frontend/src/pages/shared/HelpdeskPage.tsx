@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import {
@@ -25,6 +26,8 @@ import {
 } from "@/components/ui/accordion";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { helpdeskApi } from "@/services/helpdesk-api";
+import { toast } from "@/hooks/use-toast";
 
 // Types
 type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
@@ -80,25 +83,48 @@ const PRIORITY_CONFIG: Record<TicketPriority, { label: string; color: string }> 
 };
 
 const HelpdeskPage = () => {
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState("tickets");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showNewTicket, setShowNewTicket] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
+
+  const { data: ticketsData, isError } = useQuery({
+    queryKey: ["helpdesk-tickets", statusFilter],
+    queryFn: () => helpdeskApi.getTickets({ status: statusFilter === "all" ? undefined : statusFilter }),
+    retry: 1,
+    staleTime: 30000,
+  });
+
+  const { data: faqsData } = useQuery({
+    queryKey: ["helpdesk-faqs"],
+    queryFn: () => helpdeskApi.getFaqs(),
+    retry: 1,
+    enabled: !demoMode,
+  });
+
+  useEffect(() => {
+    if (isError && !demoMode) setDemoMode(true);
+  }, [isError, demoMode]);
+
+  const tickets = demoMode ? DEMO_TICKETS : (ticketsData?.items || DEMO_TICKETS);
+  const faqs = demoMode ? DEMO_FAQS : (faqsData || DEMO_FAQS);
 
   const stats = useMemo(() => ({
-    open: DEMO_TICKETS.filter(t => t.status === "open").length,
-    inProgress: DEMO_TICKETS.filter(t => t.status === "in_progress").length,
-    resolved: DEMO_TICKETS.filter(t => t.status === "resolved" || t.status === "closed").length,
-    total: DEMO_TICKETS.length,
-  }), []);
+    open: tickets.filter((t: Ticket) => t.status === "open").length,
+    inProgress: tickets.filter((t: Ticket) => t.status === "in_progress").length,
+    resolved: tickets.filter((t: Ticket) => t.status === "resolved" || t.status === "closed").length,
+    total: tickets.length,
+  }), [tickets]);
 
   const filteredTickets = useMemo(() => {
-    return DEMO_TICKETS.filter(ticket => {
+    return tickets.filter((ticket: Ticket) => {
       const matchesSearch = ticket.subject.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === "all" || ticket.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [search, statusFilter]);
+  }, [search, statusFilter, tickets]);
 
   return (
     <div className="space-y-6">
@@ -211,7 +237,7 @@ const HelpdeskPage = () => {
                             </div>
                             <p className="text-sm text-muted-foreground mt-2 line-clamp-1">{ticket.description}</p>
                             <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                              <span>Created: {format(new Date(ticket.createdAt), "MMM d, yyyy")}</span>
+                              <span>Created: {format(new Date((ticket as any).createdAt || (ticket as any).created_at), "MMM d, yyyy")}</span>
                               <span className="flex items-center gap-1">
                                 <MessageSquare className="h-3 w-3" /> {ticket.responses} replies
                               </span>
@@ -239,7 +265,7 @@ const HelpdeskPage = () => {
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
-                {DEMO_FAQS.map((faq, i) => (
+                {faqs.map((faq: FAQ, i: number) => (
                   <AccordionItem key={i} value={`faq-${i}`}>
                     <AccordionTrigger className="text-left text-sm">
                       <div className="flex items-center gap-2">

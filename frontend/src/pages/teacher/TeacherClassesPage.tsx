@@ -1,18 +1,18 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { teacherApi } from "@/services/teacher-api";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
 import {
   Users, BookOpen, Clock, Calendar, FileText, MoreHorizontal,
-  Eye, Edit, CheckCircle2, XCircle, ChevronRight, TrendingUp,
-  AlertCircle, User, GraduationCap, ClipboardList,
+  Eye, CheckCircle2, ChevronRight, TrendingUp,
+  AlertCircle, GraduationCap, ClipboardList, RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -41,29 +41,43 @@ interface UpcomingClass {
 }
 
 // Demo data
-const DEMO_ASSIGNMENTS: ClassAssignment[] = [
+const DEMO_CLASSES: ClassAssignment[] = [
   { id: "1", className: "Class 10", section: "A", subject: "Mathematics", totalStudents: 30, periodsPerWeek: 6, syllabusProgress: 72, attendanceToday: 93, pendingAssignments: 2 },
   { id: "2", className: "Class 10", section: "B", subject: "Mathematics", totalStudents: 28, periodsPerWeek: 6, syllabusProgress: 68, attendanceToday: 89, pendingAssignments: 1 },
   { id: "3", className: "Class 9", section: "A", subject: "Mathematics", totalStudents: 32, periodsPerWeek: 5, syllabusProgress: 75, attendanceToday: 97, pendingAssignments: 0 },
   { id: "4", className: "Class 9", section: "B", subject: "Mathematics", totalStudents: 30, periodsPerWeek: 5, syllabusProgress: 70, attendanceToday: 90, pendingAssignments: 3 },
 ];
 
-const UPCOMING_CLASSES: UpcomingClass[] = [
+const DEMO_UPCOMING: UpcomingClass[] = [
   { id: "1", className: "Class 10-A", subject: "Mathematics", startTime: "10:30", endTime: "11:15", room: "Room 101", topic: "Quadratic Equations" },
   { id: "2", className: "Class 10-B", subject: "Mathematics", startTime: "11:15", endTime: "12:00", room: "Room 102", topic: "Quadratic Equations" },
   { id: "3", className: "Class 9-A", subject: "Mathematics", startTime: "13:30", endTime: "14:15", room: "Room 201", topic: "Linear Equations" },
 ];
 
 const TeacherClassesPage = () => {
-  const [demoMode] = useState(true);
+  const [demoMode, setDemoMode] = useState(false);
+
+  const { data: classesData, isError, refetch } = useQuery({
+    queryKey: ["teacher-my-classes"],
+    queryFn: () => teacherApi.getMyClasses(),
+    retry: 1,
+    staleTime: 30000,
+  });
+
+  useEffect(() => {
+    if (isError && !demoMode) setDemoMode(true);
+  }, [isError, demoMode]);
+
+  const myClasses = demoMode ? DEMO_CLASSES : (classesData?.classes || DEMO_CLASSES);
+  const upcomingClasses = demoMode ? DEMO_UPCOMING : (classesData?.upcoming || DEMO_UPCOMING);
 
   // Stats
   const stats = useMemo(() => ({
-    totalClasses: DEMO_ASSIGNMENTS.length,
-    totalStudents: DEMO_ASSIGNMENTS.reduce((sum, c) => sum + c.totalStudents, 0),
-    avgAttendance: Math.round(DEMO_ASSIGNMENTS.reduce((sum, c) => sum + c.attendanceToday, 0) / DEMO_ASSIGNMENTS.length),
-    pendingWork: DEMO_ASSIGNMENTS.reduce((sum, c) => sum + c.pendingAssignments, 0),
-  }), []);
+    totalClasses: myClasses.length,
+    totalStudents: myClasses.reduce((sum: number, c: ClassAssignment) => sum + c.totalStudents, 0),
+    avgAttendance: Math.round(myClasses.reduce((sum: number, c: ClassAssignment) => sum + c.attendanceToday, 0) / (myClasses.length || 1)),
+    pendingWork: myClasses.reduce((sum: number, c: ClassAssignment) => sum + c.pendingAssignments, 0),
+  }), [myClasses]);
 
   return (
     <div className="space-y-6">
@@ -81,6 +95,11 @@ const TeacherClassesPage = () => {
           <p className="text-muted-foreground text-sm">Manage your teaching assignments</p>
         </div>
         <div className="flex items-center gap-2">
+          {!demoMode && (
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+            </Button>
+          )}
           <Button variant="outline" size="sm">
             <Calendar className="h-4 w-4 mr-1" /> View Schedule
           </Button>
@@ -120,7 +139,7 @@ const TeacherClassesPage = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {UPCOMING_CLASSES.map((cls, i) => (
+            {upcomingClasses.map((cls: UpcomingClass, i: number) => (
               <motion.div
                 key={cls.id}
                 initial={{ opacity: 0, x: -10 }}
@@ -153,13 +172,8 @@ const TeacherClassesPage = () => {
 
       {/* Class Cards */}
       <div className="grid gap-4 md:grid-cols-2">
-        {DEMO_ASSIGNMENTS.map((assignment, i) => (
-          <motion.div
-            key={assignment.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-          >
+        {myClasses.map((assignment: ClassAssignment, i: number) => (
+          <motion.div key={assignment.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
             <Card className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
@@ -179,15 +193,9 @@ const TeacherClassesPage = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Users className="h-3.5 w-3.5 mr-2" /> View Students
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <ClipboardList className="h-3.5 w-3.5 mr-2" /> Take Attendance
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <FileText className="h-3.5 w-3.5 mr-2" /> Assignments
-                      </DropdownMenuItem>
+                      <DropdownMenuItem><Users className="h-3.5 w-3.5 mr-2" /> View Students</DropdownMenuItem>
+                      <DropdownMenuItem><ClipboardList className="h-3.5 w-3.5 mr-2" /> Take Attendance</DropdownMenuItem>
+                      <DropdownMenuItem><FileText className="h-3.5 w-3.5 mr-2" /> Assignments</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

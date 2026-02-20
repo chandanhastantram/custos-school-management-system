@@ -107,4 +107,48 @@ export const teacherApi = {
     });
     return response.data;
   },
+
+  // Assignments & Grading
+  async getAssignments(params?: { class_id?: string; status?: string; page?: number }) {
+    const response = await apiClient.get('/assignments', { params });
+    return response.data;
+  },
+
+  async createAssignment(data: {
+    title: string;
+    class_id: string;
+    subject_id: string;
+    due_date: string;
+    max_score: number;
+    description?: string;
+  }) {
+    const response = await apiClient.post('/assignments', data);
+    return response.data;
+  },
+
+  async getSubmissions(assignmentId: string) {
+    const response = await apiClient.get(`/assignments/${assignmentId}/submissions`);
+    return response.data;
+  },
+
+  async gradeSubmission(submissionId: string, data: { score: number; feedback?: string }) {
+    const response = await apiClient.patch(`/submissions/${submissionId}/grade`, data);
+    return response.data;
+  },
+
+  // Teacher Classes
+  async getMyClasses() {
+    const response = await apiClient.get('/teachers/me/classes');
+    return response.data;
+  },
+
+  async getClassStudents(classId: string) {
+    const response = await apiClient.get(`/classes/${classId}/students`);
+    return response.data;
+  },
+
+  async getAttendanceHistory(params?: { class_id?: string; page?: number }) {
+    const response = await apiClient.get('/attendance/history', { params });
+    return response.data;
+  },
 };

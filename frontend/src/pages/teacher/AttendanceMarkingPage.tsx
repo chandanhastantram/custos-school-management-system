@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { teacherApi } from "@/services/teacher-api";
 import { motion } from "framer-motion";
 import {
   ClipboardCheck, Calendar, Users, CheckCircle2, XCircle,
-  Clock, Save, Loader2, Search, ChevronLeft, ChevronRight, Check
+  Clock, Save, Loader2, Search, ChevronLeft, ChevronRight, RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,6 @@ interface Student {
   id: string;
   name: string;
   rollNo: string;
-  status?: Status;
 }
 
 interface ClassItem {
@@ -33,7 +32,8 @@ interface ClassItem {
   totalStudents: number;
 }
 
-const CLASSES: ClassItem[] = [
+// Demo data (fallback)
+const DEMO_CLASSES: ClassItem[] = [
   { id: "c1", name: "10-A", subject: "Mathematics", time: "09:00 AM", totalStudents: 32 },
   { id: "c2", name: "10-B", subject: "Physics", time: "11:00 AM", totalStudents: 30 },
   { id: "c3", name: "9-A", subject: "Chemistry", time: "01:00 PM", totalStudents: 28 },
@@ -52,7 +52,7 @@ const DEMO_STUDENTS: Student[] = [
   { id: "s10", name: "Rohan Joshi", rollNo: "010" },
 ];
 
-const HISTORY = [
+const DEMO_HISTORY = [
   { date: "2024-02-12", class: "Mathematics - 10A", present: 30, absent: 2, late: 0 },
   { date: "2024-02-11", class: "Mathematics - 10A", present: 28, absent: 3, late: 1 },
   { date: "2024-02-10", class: "Physics - 10B", present: 29, absent: 1, late: 0 },
@@ -66,11 +66,44 @@ const AttendanceMarkingPage = () => {
   const [attendance, setAttendance] = useState<Record<string, Status>>({});
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
+
+  // Fetch classes from API
+  const { data: classesData, isError: classesError } = useQuery({
+    queryKey: ["teacher-classes"],
+    queryFn: () => teacherApi.getMyClasses(),
+    retry: 1,
+    staleTime: 30000,
+  });
+
+  // Fetch students for selected class
+  const { data: studentsData, isError: studentsError } = useQuery({
+    queryKey: ["class-students", selectedClass?.id],
+    queryFn: () => selectedClass ? teacherApi.getClassStudents(selectedClass.id) : Promise.resolve([]),
+    enabled: !!selectedClass && !demoMode,
+    retry: 1,
+  });
+
+  // Fetch attendance history
+  const { data: historyData } = useQuery({
+    queryKey: ["attendance-history"],
+    queryFn: () => teacherApi.getAttendanceHistory(),
+    retry: 1,
+    enabled: !demoMode,
+  });
+
+  useEffect(() => {
+    if ((classesError || studentsError) && !demoMode) setDemoMode(true);
+  }, [classesError, studentsError, demoMode]);
+
+  const classes = demoMode ? DEMO_CLASSES : (classesData || DEMO_CLASSES);
+  const students = demoMode ? DEMO_STUDENTS : (studentsData || DEMO_STUDENTS);
+  const history = demoMode ? DEMO_HISTORY : (historyData || DEMO_HISTORY);
 
   const filteredStudents = useMemo(() =>
-    DEMO_STUDENTS.filter(s =>
+    students.filter((s: Student) =>
       s.name.toLowerCase().includes(search.toLowerCase()) || s.rollNo.includes(search)
-    ), [search]);
+    ), [search, students]);
 
   const stats = useMemo(() => {
     const vals = Object.values(attendance);
@@ -78,9 +111,9 @@ const AttendanceMarkingPage = () => {
       present: vals.filter(v => v === "present").length,
       absent: vals.filter(v => v === "absent").length,
       late: vals.filter(v => v === "late").length,
-      total: DEMO_STUDENTS.length,
+      total: students.length,
     };
-  }, [attendance]);
+  }, [attendance, students]);
 
   const setStatus = (studentId: string, status: Status) => {
     setAttendance(prev => ({
@@ -91,7 +124,7 @@ const AttendanceMarkingPage = () => {
 
   const markAll = (status: Status) => {
     const rec: Record<string, Status> = {};
-    DEMO_STUDENTS.forEach(s => { rec[s.id] = status; });
+    students.forEach((s: Student) => { rec[s.id] = status; });
     setAttendance(rec);
     toast({ title: `Marked all as ${status}` });
   };
@@ -113,7 +146,7 @@ const AttendanceMarkingPage = () => {
         attendance: attendance_data,
       });
     } catch {
-      // fallback: just show success locally
+      // fallback: show success locally
     }
     setSaving(false);
     toast({
@@ -132,10 +165,17 @@ const AttendanceMarkingPage = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <ClipboardCheck className="h-6 w-6 text-primary" />
-            Mark Attendance
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <ClipboardCheck className="h-6 w-6 text-primary" />
+              Mark Attendance
+            </h1>
+            {demoMode && (
+              <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950 dark:border-amber-800">
+                Demo Mode
+              </Badge>
+            )}
+          </div>
           <p className="text-muted-foreground text-sm">Record student attendance for your classes</p>
         </div>
         <div className="flex items-center gap-2">
@@ -180,7 +220,7 @@ const AttendanceMarkingPage = () => {
           <Card>
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-3">
-                {CLASSES.map(cls => (
+                {classes.map((cls: ClassItem) => (
                   <button
                     key={cls.id}
                     onClick={() => { setSelectedClass(cls); setAttendance({}); }}
@@ -210,8 +250,7 @@ const AttendanceMarkingPage = () => {
                 </div>
                 <span className="text-sm text-muted-foreground">Quick:</span>
                 {(["present", "absent", "late"] as Status[]).map(s => (
-                  <Button key={s} variant="outline" size="sm" onClick={() => markAll(s)}
-                    className={STATUS_CONFIG[s].color}>
+                  <Button key={s} variant="outline" size="sm" onClick={() => markAll(s)} className={STATUS_CONFIG[s].color}>
                     All {STATUS_CONFIG[s].label}
                   </Button>
                 ))}
@@ -226,7 +265,7 @@ const AttendanceMarkingPage = () => {
               <Card>
                 <CardContent className="p-0">
                   <div className="divide-y divide-border">
-                    {filteredStudents.map((student, i) => {
+                    {filteredStudents.map((student: Student, i: number) => {
                       const status = attendance[student.id];
                       return (
                         <motion.div
@@ -293,7 +332,7 @@ const AttendanceMarkingPage = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {HISTORY.map((h, i) => (
+                {history.map((h: any, i: number) => (
                   <div key={i} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">
                     <div>
                       <p className="font-medium text-sm">{h.class}</p>

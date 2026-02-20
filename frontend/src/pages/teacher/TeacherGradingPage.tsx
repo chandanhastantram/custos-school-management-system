@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { teacherApi } from "@/services/teacher-api";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import {
   FileText, CheckCircle2, XCircle, Clock, MoreHorizontal, Eye,
-  Edit, Download, Search, Filter, Users, BookOpen, Award,
-  TrendingUp, AlertCircle, ChevronRight,
+  Edit, Download, Search, Users, BookOpen, Award,
+  TrendingUp, AlertCircle, ChevronRight, RefreshCw, Plus, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,13 +20,9 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  Tabs, TabsContent, TabsList, TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 // Types
@@ -78,18 +76,54 @@ const STATUS_CONFIG: Record<AssignmentStatus, { label: string; color: string; bg
 };
 
 const TeacherGradingPage = () => {
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState("assignments");
   const [search, setSearch] = useState("");
   const [selectedAssignment, setSelectedAssignment] = useState<string | null>(null);
-  const [demoMode] = useState(true);
+  const [demoMode, setDemoMode] = useState(false);
+
+  // Fetch assignments from API
+  const { data: assignmentsData, isError: assignmentsError, refetch } = useQuery({
+    queryKey: ["teacher-assignments"],
+    queryFn: () => teacherApi.getAssignments(),
+    retry: 1,
+    staleTime: 30000,
+  });
+
+  // Fetch submissions for selected assignment
+  const { data: submissionsData, isError: submissionsError } = useQuery({
+    queryKey: ["assignment-submissions", selectedAssignment],
+    queryFn: () => selectedAssignment ? teacherApi.getSubmissions(selectedAssignment) : Promise.resolve([]),
+    enabled: !!selectedAssignment && !demoMode,
+    retry: 1,
+  });
+
+  useEffect(() => {
+    if (assignmentsError && !demoMode) setDemoMode(true);
+  }, [assignmentsError, demoMode]);
+
+  const assignments = demoMode ? DEMO_ASSIGNMENTS : (assignmentsData || DEMO_ASSIGNMENTS);
+  const submissions = demoMode ? DEMO_SUBMISSIONS : (submissionsData || DEMO_SUBMISSIONS);
+
+  const gradeMutation = useMutation({
+    mutationFn: ({ submissionId, data }: { submissionId: string; data: { score: number; feedback?: string } }) =>
+      teacherApi.gradeSubmission(submissionId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assignment-submissions"] });
+      toast({ title: "Graded successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error grading", variant: "destructive" });
+    },
+  });
 
   // Stats
   const stats = useMemo(() => ({
-    totalAssignments: DEMO_ASSIGNMENTS.length,
-    pendingGrading: DEMO_ASSIGNMENTS.reduce((sum, a) => sum + (a.totalSubmissions - a.gradedCount), 0),
+    totalAssignments: assignments.length,
+    pendingGrading: assignments.reduce((sum: number, a: Assignment) => sum + (a.totalSubmissions - a.gradedCount), 0),
     avgScore: 82,
     completionRate: 85,
-  }), []);
+  }), [assignments]);
 
   return (
     <div className="space-y-6">
@@ -107,6 +141,11 @@ const TeacherGradingPage = () => {
           <p className="text-muted-foreground text-sm">Grade assignments and track student performance</p>
         </div>
         <div className="flex items-center gap-2">
+          {!demoMode && (
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+            </Button>
+          )}
           <Button variant="outline" size="sm">
             <Download className="h-4 w-4 mr-1" /> Export Grades
           </Button>
@@ -147,32 +186,21 @@ const TeacherGradingPage = () => {
           </TabsList>
           <div className="relative max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+            <Input placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
         </div>
 
         {/* Assignments Tab */}
         <TabsContent value="assignments" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            {DEMO_ASSIGNMENTS.map((assignment, i) => {
-              const gradingProgress = assignment.totalSubmissions > 0 
-                ? (assignment.gradedCount / assignment.totalSubmissions) * 100 
+            {assignments.map((assignment: Assignment, i: number) => {
+              const gradingProgress = assignment.totalSubmissions > 0
+                ? (assignment.gradedCount / assignment.totalSubmissions) * 100
                 : 0;
-              const submissionRate = (assignment.totalSubmissions / assignment.totalStudents) * 100;
-              
+
               return (
-                <motion.div
-                  key={assignment.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                <motion.div key={assignment.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setSelectedAssignment(assignment.id); setTab("submissions"); }}>
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
                         <div>
@@ -184,20 +212,14 @@ const TeacherGradingPage = () => {
                         </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="h-3.5 w-3.5 mr-2" /> View Submissions
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="h-3.5 w-3.5 mr-2" /> Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Download className="h-3.5 w-3.5 mr-2" /> Export Grades
-                            </DropdownMenuItem>
+                            <DropdownMenuItem><Eye className="h-3.5 w-3.5 mr-2" /> View Submissions</DropdownMenuItem>
+                            <DropdownMenuItem><Edit className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
+                            <DropdownMenuItem><Download className="h-3.5 w-3.5 mr-2" /> Export Grades</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -241,11 +263,7 @@ const TeacherGradingPage = () => {
 
         {/* Submissions Tab */}
         <TabsContent value="submissions" className="space-y-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="rounded-xl border border-border bg-card overflow-hidden"
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl border border-border bg-card overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">
@@ -258,7 +276,7 @@ const TeacherGradingPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {DEMO_SUBMISSIONS.map((sub, i) => (
+                {submissions.map((sub: Submission, i: number) => (
                   <motion.tr
                     key={sub.id}
                     initial={{ opacity: 0 }}

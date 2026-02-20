@@ -1,191 +1,223 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Trophy, Calendar, Users, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Trophy, Star, Users, Calendar, MapPin, Clock,
+  Plus, CheckCircle2, RefreshCw, Activity,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { studentApi } from "@/services/student-api";
+import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+// Demo data (fallback)
+const DEMO_MY_ACTIVITIES = [
+  { id: "a1", name: "Basketball Team", category: "Sports", role: "Player", schedule: "Mon, Wed, Fri - 4:00 PM", points: 120 },
+  { id: "a2", name: "Science Club", category: "Academic", role: "Member", schedule: "Tue - 3:30 PM", points: 85 },
+  { id: "a3", name: "Music Band", category: "Arts", role: "Guitarist", schedule: "Thu - 4:00 PM", points: 60 },
+];
+
+const DEMO_AVAILABLE = [
+  { id: "b1", name: "Debate Club", category: "Academic", description: "Develop public speaking and argumentation skills", members: 18, maxMembers: 25, schedule: "Wed - 3:30 PM" },
+  { id: "b2", name: "Chess Club", category: "Games", description: "Learn strategy and compete in tournaments", members: 12, maxMembers: 20, schedule: "Fri - 3:00 PM" },
+  { id: "b3", name: "Art Workshop", category: "Arts", description: "Express creativity through painting and sculpture", members: 22, maxMembers: 30, schedule: "Sat - 10:00 AM" },
+];
+
+const DEMO_ACHIEVEMENTS = [
+  { id: "c1", title: "Basketball District Champions", date: "2024-01-15", category: "Sports", points: 50 },
+  { id: "c2", title: "Science Fair - 2nd Place", date: "2024-01-20", category: "Academic", points: 40 },
+  { id: "c3", title: "Music Performance - Annual Day", date: "2023-12-10", category: "Arts", points: 30 },
+];
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Sports: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  Academic: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+  Arts: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300",
+  Games: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+};
 
 const ExtracurricularPage = () => {
-  const myActivities = [
-    { id: 1, name: "Chess Club", role: "Member", schedule: "Wednesdays 4-5 PM", points: 50 },
-    { id: 2, name: "Science Club", role: "President", schedule: "Fridays 3-5 PM", points: 100 },
-  ];
+  const queryClient = useQueryClient();
+  const [demoMode, setDemoMode] = useState(false);
+  const [demoAvailable, setDemoAvailable] = useState(DEMO_AVAILABLE);
 
-  const availableActivities = [
-    { id: 3, name: "Drama Club", category: "Arts", schedule: "Tuesdays 4-6 PM", members: 25, openSlots: 5 },
-    { id: 4, name: "Basketball Team", category: "Sports", schedule: "Mon, Thu 5-6 PM", members: 15, openSlots: 3 },
-  ];
+  const { data, isError, refetch } = useQuery({
+    queryKey: ["student-activities"],
+    queryFn: () => studentApi.getActivities(),
+    retry: 1,
+    staleTime: 30000,
+  });
 
-  const achievements = [
-    { id: 1, title: "Science Fair Winner", date: "2024-02-10", points: 100, badge: "🏆" },
-    { id: 2, title: "Chess Tournament - 2nd Place", date: "2024-01-25", points: 75, badge: "🥈" },
-  ];
+  useEffect(() => {
+    if (isError && !demoMode) setDemoMode(true);
+  }, [isError, demoMode]);
+
+  const enrollMutation = useMutation({
+    mutationFn: (activityId: string) => studentApi.enrollActivity(activityId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-activities"] });
+      toast({ title: "Enrolled!", description: "You have been enrolled in the activity." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to enroll", variant: "destructive" });
+    },
+  });
+
+  const handleEnroll = (activityId: string) => {
+    if (demoMode) {
+      setDemoAvailable(prev => prev.filter(a => a.id !== activityId));
+      toast({ title: "Enrolled!", description: "You have been enrolled in the activity." });
+      return;
+    }
+    enrollMutation.mutate(activityId);
+  };
+
+  const myActivities = demoMode ? DEMO_MY_ACTIVITIES : (data?.my_activities || DEMO_MY_ACTIVITIES);
+  const available = demoMode ? demoAvailable : (data?.available || DEMO_AVAILABLE);
+  const achievements = demoMode ? DEMO_ACHIEVEMENTS : (data?.achievements || DEMO_ACHIEVEMENTS);
+  const totalPoints = myActivities.reduce((sum: number, a: any) => sum + (a.points || 0), 0);
 
   return (
-    <div className="container py-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Trophy className="h-8 w-8 text-primary" />
-              Extracurricular Activities
-            </h1>
-            <p className="text-muted-foreground mt-1">Join clubs, sports, and earn activity points</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">Extracurricular Activities</h1>
+            {demoMode && (
+              <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950 dark:border-amber-800">
+                Demo Mode
+              </Badge>
+            )}
           </div>
+          <p className="text-muted-foreground text-sm">Manage your activities and achievements</p>
         </div>
+        {!demoMode && (
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+          </Button>
+        )}
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>My Activities</CardDescription>
-              <CardTitle className="text-3xl">2</CardTitle>
-            </CardHeader>
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "My Activities", value: myActivities.length, icon: Activity, color: "text-blue-600" },
+          { label: "Total Points", value: totalPoints, icon: Star, color: "text-amber-600" },
+          { label: "Achievements", value: achievements.length, icon: Trophy, color: "text-purple-600" },
+          { label: "Available", value: available.length, icon: Plus, color: "text-emerald-600" },
+        ].map((stat) => (
+          <Card key={stat.label}>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", stat.color.replace("text-", "bg-").replace("-600", "-100"), "dark:bg-opacity-20")}>
+                <stat.icon className={cn("h-5 w-5", stat.color)} />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                <p className={cn("text-lg font-bold", stat.color)}>{stat.value}</p>
+              </div>
+            </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>Total Points</CardDescription>
-              <CardTitle className="text-3xl">225</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>Achievements</CardDescription>
-              <CardTitle className="text-3xl">8</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>Class Rank</CardDescription>
-              <CardTitle className="text-3xl">#3</CardTitle>
-            </CardHeader>
-          </Card>
-        </div>
+        ))}
+      </div>
 
-        <Tabs defaultValue="my-activities" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="my-activities">My Activities</TabsTrigger>
-            <TabsTrigger value="available">Available</TabsTrigger>
-            <TabsTrigger value="achievements">Achievements</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="my" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="my">My Activities</TabsTrigger>
+          <TabsTrigger value="available">Available</TabsTrigger>
+          <TabsTrigger value="achievements">Achievements</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="my-activities">
-            <Card>
-              <CardHeader>
-                <CardTitle>My Enrolled Activities</CardTitle>
-                <CardDescription>Activities you're currently participating in</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {myActivities.map((activity) => (
-                    <Card key={activity.id} className="border-2">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <CardTitle className="text-lg">{activity.name}</CardTitle>
-                            <CardDescription className="flex items-center gap-4 mt-2">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-4 w-4" />
-                                {activity.schedule}
-                              </span>
-                            </CardDescription>
-                          </div>
-                          <Badge>{activity.role}</Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm">
-                            <p className="text-muted-foreground">Points Earned</p>
-                            <p className="text-2xl font-bold text-primary">{activity.points}</p>
-                          </div>
-                          <Button variant="outline" size="sm">View Details</Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="available">
-            <Card>
-              <CardHeader>
-                <CardTitle>Available Activities</CardTitle>
-                <CardDescription>Join new clubs and activities</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {availableActivities.map((activity) => (
-                    <Card key={activity.id} className="border-2">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <CardTitle className="text-lg">{activity.name}</CardTitle>
-                            <CardDescription className="flex items-center gap-4 mt-2">
-                              <Badge variant="outline">{activity.category}</Badge>
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-4 w-4" />
-                                {activity.schedule}
-                              </span>
-                            </CardDescription>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4 text-sm">
-                            <span className="flex items-center gap-1">
-                              <Users className="h-4 w-4" />
-                              {activity.members} members
-                            </span>
-                            <span className="text-green-600">{activity.openSlots} slots open</span>
-                          </div>
-                          <Button size="sm">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Join
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="achievements">
-            <Card>
-              <CardHeader>
-                <CardTitle>My Achievements</CardTitle>
-                <CardDescription>Badges and awards earned</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {achievements.map((achievement) => (
-                    <div key={achievement.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                      <div className="text-4xl">{achievement.badge}</div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold">{achievement.title}</h4>
-                        <p className="text-sm text-muted-foreground">{achievement.date}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">Points</p>
-                        <p className="text-xl font-bold text-primary">+{achievement.points}</p>
+        {/* My Activities */}
+        <TabsContent value="my" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {myActivities.map((activity: any, i: number) => (
+              <motion.div key={activity.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                <Card className="h-full">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-3">
+                      <Badge className={CATEGORY_COLORS[activity.category] || CATEGORY_COLORS.Sports}>
+                        {activity.category}
+                      </Badge>
+                      <div className="flex items-center gap-1 text-amber-600">
+                        <Star className="h-4 w-4" />
+                        <span className="text-sm font-bold">{activity.points}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </motion.div>
+                    <h3 className="font-semibold">{activity.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Role: {activity.role}</p>
+                    <div className="flex items-center gap-1 mt-3 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span>{activity.schedule}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* Available */}
+        <TabsContent value="available" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {available.map((activity: any, i: number) => (
+              <motion.div key={activity.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                <Card className="h-full">
+                  <CardContent className="p-5 flex flex-col h-full">
+                    <Badge className={cn("self-start mb-3", CATEGORY_COLORS[activity.category] || CATEGORY_COLORS.Sports)}>
+                      {activity.category}
+                    </Badge>
+                    <h3 className="font-semibold">{activity.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">{activity.description}</p>
+                    <div className="flex flex-wrap gap-3 mt-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3 w-3" /> {activity.members}/{activity.maxMembers}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {activity.schedule}
+                      </span>
+                    </div>
+                    <div className="mt-auto pt-4">
+                      <Button size="sm" className="w-full" onClick={() => handleEnroll(activity.id)}>
+                        <Plus className="h-4 w-4 mr-1" /> Enroll
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* Achievements */}
+        <TabsContent value="achievements" className="space-y-3">
+          {achievements.map((ach: any, i: number) => (
+            <motion.div key={ach.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+              <Card className="hover:bg-muted/30 transition-colors">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                    <Trophy className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-sm">{ach.title}</h3>
+                    <p className="text-xs text-muted-foreground">{ach.date}</p>
+                  </div>
+                  <Badge className={CATEGORY_COLORS[ach.category] || CATEGORY_COLORS.Sports}>
+                    {ach.category}
+                  </Badge>
+                  <div className="flex items-center gap-1 text-amber-600 shrink-0">
+                    <Star className="h-4 w-4" />
+                    <span className="text-sm font-bold">+{ach.points}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
