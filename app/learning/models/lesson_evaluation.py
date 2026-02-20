@@ -81,7 +81,7 @@ class LessonEvaluation(TenantBaseModel):
     # Chapter/Unit being evaluated
     chapter_id: Mapped[Optional[UUID]] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("syllabus_units.id", ondelete="SET NULL"),
+        ForeignKey("syllabus_chapters.id", ondelete="SET NULL"),
         nullable=True,
     )
     
@@ -266,7 +266,7 @@ class LessonMasterySnapshot(TenantBaseModel):
     # The chapter/unit that was evaluated
     chapter_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("syllabus_units.id", ondelete="CASCADE"),
+        ForeignKey("syllabus_chapters.id", ondelete="CASCADE"),
         nullable=False,
     )
     

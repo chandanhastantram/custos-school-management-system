@@ -57,7 +57,7 @@ class TestPasswordValidation:
     
     def test_password_hash(self):
         """Test password hashing."""
-        from app.auth.password import hash_password, verify_password
+        from app.core.security import hash_password, verify_password
         
         password = "SecurePass@123"
         hashed = hash_password(password)
@@ -68,7 +68,7 @@ class TestPasswordValidation:
     
     def test_password_validator(self):
         """Test password strength validator."""
-        from app.auth.password import PasswordValidator
+        from app.core.security import PasswordValidator
         
         validator = PasswordValidator()
         
@@ -96,7 +96,7 @@ class TestJWT:
     def test_create_access_token(self):
         """Test access token creation."""
         from uuid import uuid4
-        from app.auth.jwt import create_access_token, verify_access_token
+        from app.core.security import create_access_token, verify_token as verify_access_token
         
         user_id = uuid4()
         tenant_id = uuid4()
@@ -121,7 +121,7 @@ class TestJWT:
     def test_token_pair(self):
         """Test token pair creation."""
         from uuid import uuid4
-        from app.auth.jwt import create_token_pair
+        from app.core.security import create_token_pair
         
         pair = create_token_pair(
             user_id=uuid4(),

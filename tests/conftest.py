@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 
 from app.main import app
 from app.core.database import get_db, Base
-from app.auth.password import hash_password
+from app.core.security import hash_password
 
 
 # Test database URL
