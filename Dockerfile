@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-slim AS backend
 
 WORKDIR /app
 
@@ -6,14 +6,32 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# --- Frontend Build Stage ---
+FROM node:18-slim AS frontend
+
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ .
+RUN npm run build
+
+# --- Final Stage ---
+FROM backend AS final
+
+WORKDIR /app
+
 # Copy application code
 COPY . .
+
+# Copy built frontend from the frontend stage
+COPY --from=frontend /frontend/dist /app/frontend/dist
 
 # Create non-root user and writable dirs
 RUN useradd -m -u 1000 custos && \
