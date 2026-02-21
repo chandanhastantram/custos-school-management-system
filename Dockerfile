@@ -16,10 +16,24 @@ RUN pip install --no-cache-dir -r requirements.txt
 # --- Frontend Build Stage ---
 FROM node:18-slim AS frontend
 
-WORKDIR /frontend
-COPY frontend/package*.json ./
-RUN npm ci
-COPY frontend/ .
+WORKDIR /build
+
+# Copy package files first for layer caching
+COPY frontend/package.json frontend/package-lock.json* ./
+
+# Install dependencies
+RUN npm ci --ignore-scripts || npm install
+
+# Copy all frontend source files
+COPY frontend/tsconfig.json frontend/tsconfig.app.json frontend/tsconfig.node.json ./
+COPY frontend/vite.config.ts ./
+COPY frontend/index.html ./
+COPY frontend/postcss.config.js frontend/tailwind.config.ts ./
+COPY frontend/components.json ./
+COPY frontend/src/ ./src/
+COPY frontend/public* ./public/
+
+# Build the frontend
 RUN npm run build
 
 # --- Final Stage ---
@@ -31,7 +45,7 @@ WORKDIR /app
 COPY . .
 
 # Copy built frontend from the frontend stage
-COPY --from=frontend /frontend/dist /app/frontend/dist
+COPY --from=frontend /build/dist /app/frontend/dist
 
 # Create non-root user and writable dirs
 RUN useradd -m -u 1000 custos && \
