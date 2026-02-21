@@ -7,17 +7,19 @@ venv/
 .venv/
 env/
 
-# Node
+# Node modules (MUST exclude - causes build conflicts)
+frontend/node_modules/
 **/node_modules/
+
+# Frontend build output
 frontend/dist/
-frontend/.env.local
 
 # IDE
 .idea/
 .vscode/
 *.swp
 
-# Environment
+# Environment files
 .env
 .env.local
 .env.*.local
