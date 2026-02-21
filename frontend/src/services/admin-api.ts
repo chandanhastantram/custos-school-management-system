@@ -148,52 +148,52 @@ export const announcementsApi = {
 // Academics Management
 export const academicsApi = {
   async getClasses(params?: { page?: number; size?: number }) {
-    const response = await apiClient.get('/academics/classes', { params });
+    const response = await apiClient.get('/academic/classes', { params });
     return response.data;
   },
 
   async createClass(data: { name: string; grade: number }) {
-    const response = await apiClient.post('/academics/classes', data);
+    const response = await apiClient.post('/academic/classes', data);
     return response.data;
   },
 
   async updateClass(id: string, data: any) {
-    const response = await apiClient.patch(`/academics/classes/${id}`, data);
+    const response = await apiClient.patch(`/academic/classes/${id}`, data);
     return response.data;
   },
 
   async deleteClass(id: string) {
-    const response = await apiClient.delete(`/academics/classes/${id}`);
+    const response = await apiClient.delete(`/academic/classes/${id}`);
     return response.data;
   },
 
   async getSections(classId: string) {
-    const response = await apiClient.get(`/academics/classes/${classId}/sections`);
+    const response = await apiClient.get(`/academic/classes/${classId}/sections`);
     return response.data;
   },
 
   async createSection(classId: string, data: { name: string; class_teacher_id?: string; room?: string }) {
-    const response = await apiClient.post(`/academics/classes/${classId}/sections`, data);
+    const response = await apiClient.post(`/academic/sections`, data);
     return response.data;
   },
 
   async getSubjects(params?: { page?: number; size?: number }) {
-    const response = await apiClient.get('/academics/subjects', { params });
+    const response = await apiClient.get('/academics/syllabus/subjects', { params });
     return response.data;
   },
 
   async createSubject(data: { name: string; code: string; type: string; credits: number; periods_per_week: number }) {
-    const response = await apiClient.post('/academics/subjects', data);
+    const response = await apiClient.post('/academics/syllabus/subjects', data);
     return response.data;
   },
 
   async deleteSubject(id: string) {
-    const response = await apiClient.delete(`/academics/subjects/${id}`);
+    const response = await apiClient.delete(`/academics/syllabus/subjects/${id}`);
     return response.data;
   },
 
   async getAcademicYears() {
-    const response = await apiClient.get('/academics/years');
+    const response = await apiClient.get('/academic/years');
     return response.data;
   },
 };

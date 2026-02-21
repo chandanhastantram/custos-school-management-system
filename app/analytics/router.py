@@ -45,6 +45,66 @@ router = APIRouter(tags=["Analytics"])
 
 
 # ============================================
+# Simplified Dashboard (for frontend)
+# ============================================
+
+@router.get("/dashboard")
+async def get_dashboard_stats(
+    user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+    period: Optional[str] = Query(None, description="Period: 'week', 'month', 'quarter', 'year'"),
+):
+    """
+    Get simplified dashboard statistics for frontend.
+    
+    Automatically calculates date range based on period.
+    Falls back to last 30 days if no period specified.
+    """
+    from datetime import timedelta
+    
+    today = date.today()
+    if period == "week":
+        period_start = today - timedelta(days=7)
+    elif period == "quarter":
+        period_start = today - timedelta(days=90)
+    elif period == "year":
+        period_start = today - timedelta(days=365)
+    else:  # default: month
+        period_start = today - timedelta(days=30)
+    
+    service = AnalyticsService(db, user.tenant_id)
+    
+    try:
+        data = await service.get_principal_dashboard(period_start, today)
+        return {
+            "period_start": str(period_start),
+            "period_end": str(today),
+            "total_students": data.get("total_students", 0),
+            "total_teachers": data.get("total_teachers", 0),
+            "total_classes": data.get("total_classes", 0),
+            "school_avg_mastery": data.get("school_avg_mastery", 0),
+            "school_avg_attendance": data.get("school_avg_attendance", 0),
+            "school_avg_activity": data.get("school_avg_activity", 0),
+            "avg_syllabus_coverage": data.get("avg_syllabus_coverage", 0),
+            "avg_teacher_engagement": data.get("avg_teacher_engagement", 0),
+        }
+    except Exception:
+        # Return empty stats if analytics haven't been generated yet
+        return {
+            "period_start": str(period_start),
+            "period_end": str(today),
+            "total_students": 0,
+            "total_teachers": 0,
+            "total_classes": 0,
+            "school_avg_mastery": 0,
+            "school_avg_attendance": 0,
+            "school_avg_activity": 0,
+            "avg_syllabus_coverage": 0,
+            "avg_teacher_engagement": 0,
+        }
+
+
+# ============================================
 # Admin: Generate Analytics
 # ============================================
 

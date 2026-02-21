@@ -71,6 +71,46 @@ async def mark_bulk_attendance(
     return {"success": True, "records_updated": count}
 
 
+@router.post("/mark")
+async def mark_attendance_convenience(
+    data: BulkAttendanceRequest,
+    user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(require_permission(Permission.ATTENDANCE_MARK)),
+):
+    """
+    Convenience endpoint for marking attendance (wraps bulk-mark).
+    
+    Used by teacher frontend.
+    """
+    service = AttendanceService(db, user.tenant_id)
+    count = await service.mark_bulk_attendance(data, user.user_id)
+    return {"success": True, "records_updated": count}
+
+
+@router.get("/students/me", response_model=List[AttendanceRecordResponse])
+async def get_my_attendance(
+    user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+):
+    """
+    Get current user's own attendance records.
+    
+    Uses JWT to identify the student.
+    """
+    from datetime import timedelta
+    if not end_date:
+        end_date = date.today()
+    if not start_date:
+        start_date = end_date - timedelta(days=90)
+    
+    service = AttendanceService(db, user.tenant_id)
+    records = await service.get_student_attendance(user.user_id, start_date, end_date)
+    return [AttendanceRecordResponse.model_validate(r) for r in records]
+
+
 @router.get("/students/{student_id}", response_model=List[AttendanceRecordResponse])
 async def get_student_attendance(
     student_id: UUID,

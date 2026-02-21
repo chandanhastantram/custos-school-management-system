@@ -138,7 +138,7 @@ export const teacherApi = {
 
   // Teacher Classes
   async getMyClasses() {
-    const response = await apiClient.get('/teachers/me/classes');
+    const response = await apiClient.get('/academics/teaching-assignments/my-assignments');
     return response.data;
   },
 

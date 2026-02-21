@@ -341,6 +341,82 @@ async def get_student_fee_account(
 # Invoices
 # ============================================
 
+@router.get("/invoices", response_model=List[FeeInvoiceResponse])
+async def list_all_invoices(
+    user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+    status: Optional[InvoiceStatus] = None,
+    class_id: Optional[UUID] = None,
+    page: int = Query(1, ge=1),
+    size: int = Query(50, ge=1, le=100),
+    _=Depends(require_permission(Permission.FEE_VIEW)),
+):
+    """
+    List all invoices with optional filters.
+    
+    Admin endpoint for finance dashboard.
+    """
+    service = FeeService(db, user.tenant_id)
+    # Use existing method - get all student invoices with filters
+    from sqlalchemy import select
+    from app.finance.models import FeeInvoice
+    
+    query = select(FeeInvoice).where(
+        FeeInvoice.tenant_id == user.tenant_id,
+    )
+    if status:
+        query = query.where(FeeInvoice.status == status)
+    
+    query = query.order_by(FeeInvoice.created_at.desc())
+    query = query.offset((page - 1) * size).limit(size)
+    
+    result = await db.execute(query)
+    invoices = result.scalars().all()
+    return [FeeInvoiceResponse.model_validate(i) for i in invoices]
+
+
+@router.get("/summary")
+async def get_fee_summary(
+    user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(require_permission(Permission.FEE_VIEW)),
+):
+    """
+    Get aggregated fee summary for dashboard.
+    
+    Returns total collected, pending, overdue amounts.
+    """
+    from sqlalchemy import select, func
+    from app.finance.models import FeeInvoice, FeePayment
+    
+    # Total invoiced
+    inv_query = select(
+        func.count(FeeInvoice.id).label("total_invoices"),
+        func.coalesce(func.sum(FeeInvoice.total_amount), 0).label("total_amount"),
+        func.coalesce(func.sum(FeeInvoice.paid_amount), 0).label("total_paid"),
+        func.coalesce(func.sum(FeeInvoice.balance_amount), 0).label("total_pending"),
+    ).where(FeeInvoice.tenant_id == user.tenant_id)
+    
+    result = await db.execute(inv_query)
+    row = result.one()
+    
+    # Overdue count
+    overdue_query = select(func.count()).select_from(FeeInvoice).where(
+        FeeInvoice.tenant_id == user.tenant_id,
+        FeeInvoice.status == InvoiceStatus.OVERDUE,
+    )
+    overdue_result = await db.execute(overdue_query)
+    overdue_count = overdue_result.scalar() or 0
+    
+    return {
+        "total_invoices": row.total_invoices,
+        "total_amount": float(row.total_amount),
+        "total_paid": float(row.total_paid),
+        "total_pending": float(row.total_pending),
+        "overdue_count": overdue_count,
+    }
+
+
 @router.post("/invoices/generate", response_model=GenerateInvoicesResponse)
 async def generate_invoices(
     request: GenerateInvoicesRequest,

@@ -61,7 +61,7 @@ export const financeApi = {
     method: string;
     reference_no?: string;
   }) {
-    const response = await apiClient.post<Payment>('/finance/payments', data);
+    const response = await apiClient.post<Payment>(`/finance/invoices/${data.invoice_id}/pay`, data);
     return response.data;
   },
 

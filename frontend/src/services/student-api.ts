@@ -75,17 +75,17 @@ export const studentApi = {
   // Attendance
   async getAttendance(studentId?: string, params?: { start_date?: string; end_date?: string }) {
     if (studentId) {
-      const response = await apiClient.get<Attendance[]>(`/attendance/student/${studentId}`, {
+      const response = await apiClient.get<Attendance[]>(`/attendance/students/${studentId}`, {
         params
       });
       return response.data;
     }
-    const response = await apiClient.get('/attendance/me', { params });
+    const response = await apiClient.get('/attendance/students/me', { params });
     return response.data;
   },
 
   async getAttendanceSummary(studentId: string) {
-    const response = await apiClient.get(`/attendance/student/summary`, {
+    const response = await apiClient.get(`/attendance/students/${studentId}/summary`, {
       params: { student_id: studentId }
     });
     return response.data;
